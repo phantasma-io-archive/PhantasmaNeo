@@ -1,0 +1,54 @@
+{
+
+	"contract": {
+
+		"params": "0710",
+
+    "inputs": [
+
+      {
+        "name": "register first mailbox",
+        "params": [
+          "registerMailbox",
+          [ "0x029ada24a94e753729768b90edee9d24ec9027cb64cea406f8ab296fce264597f4", "hello@phantasma.io" ]
+        ]
+      },
+
+      {
+        "name": "register second mailbox",
+        "params": [
+          "registerMailbox",
+          [ "AQVh2pG732YvtNaxEGkQUei3YA4cvo7d2i", "other@phantasma.io" ]
+        ]
+      },
+
+      {
+        "name": "sendMessage()",
+        "params": [
+          "sendMessage",
+          [ "other@phantasma.io", "hello@phantasma.io", "Hello world!" ]
+        ]
+      },
+
+      {
+        "name": "getMailCount()",
+        "params": [
+          "getMailCount",
+          [ "hello@phantasma.io" ]
+        ]
+      },
+
+      {
+        "name": "getMailContent()",
+        "params": [
+          "getMailContent",
+          [ "hello@phantasma.io", 1 ]
+        ]
+      }
+
+    ]
+
+	}
+
+}
+
