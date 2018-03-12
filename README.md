@@ -1,2 +1,2 @@
 # PhantasmaNeo
-Phantasma Smart Contract
+Phantasma Deployment on NEO
