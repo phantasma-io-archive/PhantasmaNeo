@@ -95,25 +95,25 @@ namespace Neo.SmartContract
                 if (operation == "name") return Name();
                 if (operation == "symbol") return Symbol();
 
-                if (operation == "checkKYC")
+                if (operation == "whitelistCheck")
                 {
                     if (args.Length != 1) return "invalid args";
                     byte[] address = (byte[])args[0];
-                    return CheckKYC(address);
+                    return WhitelistCheck(address);
                 }
 
-                if (operation == "enableKYC")
+                if (operation == "whitelistAdd")
                 {
                     if (args.Length != 1) return "invalid args";
                     object[] addresses = (object[])args[0];
-                    return EnableKYC(addresses);
+                    return WhitelistAdd(addresses);
                 }
 
-                if (operation == "disableKYC")
+                if (operation == "whitelistRemove")
                 {
                     if (args.Length != 1) return "invalid args";
                     object[] addresses = (object[])args[0];
-                    return DisableKYC(addresses);
+                    return WhitelistRemove(addresses);
                 }
 
                 if (operation == "transfer")
@@ -353,7 +353,7 @@ namespace Neo.SmartContract
         public static event Action<byte[], byte[], BigInteger, BigInteger> OnChainSwap;
 
         // checks if address is on the whitelist
-        public static string CheckKYC(byte[] addressScriptHash)
+        public static string WhitelistCheck(byte[] addressScriptHash)
         {
             var val = Storage.Get(Storage.CurrentContext, addressScriptHash).AsBigInteger();
             if (val > 0) return "on";
@@ -361,7 +361,7 @@ namespace Neo.SmartContract
         }
 
         // adds address to the whitelist
-        public static string EnableKYC(object[] addresses)
+        public static string WhitelistAdd(object[] addresses)
         {
             if (!Runtime.CheckWitness(Whitelist_Address))
             {
@@ -389,7 +389,7 @@ namespace Neo.SmartContract
         }
 
         // removes address from the whitelist
-        public static string DisableKYC(object[] addresses)
+        public static string WhitelistRemove(object[] addresses)
         {
             if (!(Runtime.CheckWitness(Whitelist_Address)))
             {
