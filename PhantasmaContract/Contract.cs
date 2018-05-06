@@ -105,15 +105,15 @@ namespace Neo.SmartContract
                 if (operation == "enableKYC")
                 {
                     if (args.Length != 1) return "invalid args";
-                    byte[] address = (byte[])args[0];
-                    return EnableKYC(address);
+                    object[] addresses = (object[])args[0];
+                    return EnableKYC(addresses);
                 }
 
                 if (operation == "disableKYC")
                 {
                     if (args.Length != 1) return "invalid args";
-                    byte[] address = (byte[])args[0];
-                    return DisableKYC(address);
+                    object[] addresses = (object[])args[0];
+                    return DisableKYC(addresses);
                 }
 
                 if (operation == "transfer")
@@ -170,6 +170,7 @@ namespace Neo.SmartContract
                 return "not enough balance";
             }
 
+            // burn those tokens in this chain
             balance -= amount;
             Storage.Put(Storage.CurrentContext, neo_address, balance);
 
@@ -181,6 +182,7 @@ namespace Neo.SmartContract
             last_swap_index++;
             Storage.Put(Storage.CurrentContext, "chain_swap", last_swap_index);
 
+            // do a notify event
             OnChainSwap(neo_address, phantasma_address, amount, last_swap_index);
 
             return "ok";
@@ -350,51 +352,63 @@ namespace Neo.SmartContract
         }
 
         // adds address to the whitelist
-        public static string EnableKYC(byte[] addressScriptHash)
+        public static string EnableKYC(object[] addresses)
         {
             if (!Runtime.CheckWitness(Whitelist_Address))
             {
                 return "not owner";
             }
 
-            var val = Storage.Get(Storage.CurrentContext, addressScriptHash).AsBigInteger();
-
-            if (val > 0)
+            foreach (var entry in addresses)
             {
-                return "already";
+                var addressScriptHash = (byte[])entry;
+
+                var val = Storage.Get(Storage.CurrentContext, addressScriptHash).AsBigInteger();
+
+                if (val > 0)
+                {
+                    continue;
+                }
+
+                val = 1;
+                Storage.Put(Storage.CurrentContext, addressScriptHash, val);
+
+                OnWhitelistAdd(addressScriptHash);
             }
 
-            val = 1;
-            Storage.Put(Storage.CurrentContext, addressScriptHash, val);
-
-            OnWhitelistAdd(addressScriptHash);
-            return "added";
+            return "ok";
         }
 
         // removes address from the whitelist
-        public static string DisableKYC(byte[] addressScriptHash)
+        public static string DisableKYC(object[] addresses)
         {
             if (!(Runtime.CheckWitness(Whitelist_Address)))
             {
                 return "not owner";
             }
 
-            var val = Storage.Get(Storage.CurrentContext, addressScriptHash).AsBigInteger();
-
-            if (val == 0)
+            foreach (var entry in addresses)
             {
-                return "already";
+                var addressScriptHash = (byte[])entry;
+
+                var val = Storage.Get(Storage.CurrentContext, addressScriptHash).AsBigInteger();
+
+                if (val == 0)
+                {
+                    continue;
+                }
+
+                if (val > 1)
+                {
+                    continue;
+                }
+
+                Storage.Delete(Storage.CurrentContext, addressScriptHash);
+
+                OnWhitelistRemove(addressScriptHash);
             }
 
-            if (val > 1)
-            {
-                return "on-sale";
-            }
-
-            Storage.Delete(Storage.CurrentContext, addressScriptHash);
-
-            OnWhitelistRemove(addressScriptHash);
-            return "removed";
+            return "ok";
         }
 
         // initialization parameters, only once
