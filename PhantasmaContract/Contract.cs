@@ -35,7 +35,7 @@ namespace Neo.SmartContract
             if (Runtime.Trigger == TriggerType.Verification)
             {
                 // param Owner must be script hash
-                bool isOwner = Runtime.CheckWitness(Company_Address);
+                bool isOwner = Runtime.CheckWitness(Team_Address);
 
                 if (isOwner)
                 {
@@ -173,13 +173,14 @@ namespace Neo.SmartContract
             // burn those tokens in this chain
             balance -= amount;
             Storage.Put(Storage.CurrentContext, neo_address, balance);
+            OnBurn(neo_address, amount);
 
             var current_total_supply = Storage.Get(Storage.CurrentContext, "totalSupply").AsBigInteger();
             Storage.Put(Storage.CurrentContext, "totalSupply", current_total_supply - amount);
 
             // update swap ID, this makes sure every token swap has a unique ID
             var last_swap_index = Storage.Get(Storage.CurrentContext, "chain_swap").AsBigInteger();
-            last_swap_index++;
+            last_swap_index = last_swap_index + 1;
             Storage.Put(Storage.CurrentContext, "chain_swap", last_swap_index);
 
             // do a notify event
@@ -308,21 +309,22 @@ namespace Neo.SmartContract
         public static string Symbol() => "SOUL";
         public static byte Decimals() => 8;
 
-        public static readonly byte[] Company_Address = "AX7hwi7MAXMquDFQ2NSbWqyDWnjS2t7MNJ".ToScriptHash();
+        public static readonly byte[] Team_Address = "AX7hwi7MAXMquDFQ2NSbWqyDWnjS2t7MNJ".ToScriptHash();
+        public static readonly byte[] Platform_Address = "ALD9pd6nsWKZbB64Uni3JtDAEQ6ejSjdtJ".ToScriptHash();        
         public static readonly byte[] Presale_Address = "AShRtCXAfzXtkFKgnjjeFpyNnGHjP6hzJ5".ToScriptHash();
         public static readonly byte[] Whitelist_Address = "AWUtY1cefNshv9xWZVGyKVMmB1Tm5eAzhi".ToScriptHash();
 
-        private const ulong factor = 100000000; //decided by Decimals()
+        private const ulong soul_decimals = 100000000; //decided by Decimals()
         private const ulong neo_decimals = 100000000;
 
         //ICO Settings
         private static readonly byte[] neo_asset_id = { 155, 124, 255, 218, 166, 116, 190, 174, 15, 147, 14, 190, 96, 133, 175, 144, 147, 229, 254, 86, 179, 74, 92, 34, 12, 205, 207, 110, 252, 51, 111, 197 };
-        private const ulong initial_total_supply = 100000000 * factor; // total token amount
-        private const ulong company_supply = 35000000 * factor; // company token amount
-        private const ulong presale_supply = 5860736 * factor; // employee token amount
-        private const ulong sale_supply = 34139264 * factor; // ico token amount
+        private const ulong max_supply = 100000000 * soul_decimals; // total token amount
+        private const ulong team_supply = 20000000 * soul_decimals; // company token amount
+        private const ulong platform_supply = 15000000 * soul_decimals; // company token amount
+        private const ulong presale_supply = 45000000 * soul_decimals; // employee token amount
 
-        private const ulong token_swap_rate = 420 * factor; // how many tokens you get per NEO
+        private const ulong token_swap_rate = 420 * soul_decimals; // how many tokens you get per NEO
         private const ulong token_individual_cap = 554 * token_swap_rate; // max tokens than an individual can buy from to the sale
 
         private const uint ico_start_time = 1526947200; // 22 May 00h00 UTC
@@ -331,6 +333,12 @@ namespace Neo.SmartContract
 
         [DisplayName("transfer")]
         public static event Action<byte[], byte[], BigInteger> OnTransferred;
+
+        [DisplayName("mint")]
+        public static event Action<byte[], BigInteger> OnMint;
+
+        [DisplayName("burn")]
+        public static event Action<byte[], BigInteger> OnBurn;
 
         [DisplayName("refund")]
         public static event Action<byte[], BigInteger> OnRefund;
@@ -416,17 +424,25 @@ namespace Neo.SmartContract
         public static bool Deploy()
         {
             var current_total_supply = Storage.Get(Storage.CurrentContext, "totalSupply").AsBigInteger();
-            if (current_total_supply != 0) return false;
+            if (current_total_supply != 0)
+            {
+                return false;
+            }
 
-            Storage.Put(Storage.CurrentContext, Company_Address, company_supply);
+            var initialSupply = team_supply + presale_supply + platform_supply;
+
+            OnMint(Team_Address, team_supply);
+            Storage.Put(Storage.CurrentContext, Team_Address, team_supply);
+
+            OnMint(Team_Address, presale_supply);
             Storage.Put(Storage.CurrentContext, Presale_Address, presale_supply);
 
-            Storage.Put(Storage.CurrentContext, "totalSupply", initial_total_supply - sale_supply);
-
-            OnTransferred(ExecutionEngine.ExecutingScriptHash, Company_Address, company_supply);
-            OnTransferred(ExecutionEngine.ExecutingScriptHash, Presale_Address, presale_supply);
+            OnMint(Team_Address, platform_supply);
+            Storage.Put(Storage.CurrentContext, Platform_Address, platform_supply);
 
             Storage.Put(Storage.CurrentContext, "lastDistribution", ico_start_time);
+
+            Storage.Put(Storage.CurrentContext, "totalSupply", initialSupply);
 
             return true;
         }
@@ -500,7 +516,7 @@ namespace Neo.SmartContract
             //Runtime.Notify(new object[] { "SOUL", tokens_to_give });
 
             BigInteger current_supply = Storage.Get(Storage.CurrentContext, "totalSupply").AsBigInteger();
-            BigInteger tokens_available = initial_total_supply - current_supply;
+            BigInteger tokens_available = max_supply - current_supply;
 
             var cur_time = Runtime.Time;
 
