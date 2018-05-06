@@ -134,6 +134,17 @@ namespace Neo.SmartContract
 
                 if (operation == "decimals") return Decimals();
                 #endregion
+
+                #region CROSSCHAIN METHODS
+                if (operation == "chainSwap")
+                {
+                    if (args.Length != 3) return false;
+                    byte[] neo_address = (byte[])args[0];
+                    byte[] phantasma_address = (byte[])args[1];
+                    BigInteger amount = (BigInteger)args[2];
+                    return ExecuteChainSwap(neo_address, phantasma_address, amount);
+                }
+                #endregion
             }
 
             //refund if not can purchase
@@ -143,6 +154,38 @@ namespace Neo.SmartContract
             var purchase_amount = CheckPurchaseAmount(sender, neo_value, false);
             return purchase_amount > 0;
         }
+
+        #region CROSSCHAIN API
+        private static string ExecuteChainSwap(byte[] neo_address, byte[] phantasma_address, BigInteger amount)
+        {
+            if (!Runtime.CheckWitness(neo_address)) return "invalid owner";
+
+           if (amount <= 0)
+                return false;
+
+            var balance = BalanceOf(neo_address);
+
+            if (balance < amount)
+            {
+                return "not enough balance";
+            }
+
+            balance -= amount;
+            Storage.Put(Storage.CurrentContext, neo_address, balance);
+
+            var current_total_supply = Storage.Get(Storage.CurrentContext, "totalSupply").AsBigInteger();
+            Storage.Put(Storage.CurrentContext, "totalSupply", current_total_supply - amount);
+
+            // update swap ID, this makes sure every token swap has a unique ID
+            var last_swap_index = Storage.Get(Storage.CurrentContext, "chain_swap").AsBigInteger();
+            last_swap_index++;
+            Storage.Put(Storage.CurrentContext, "chain_swap", last_swap_index);
+
+            OnChainSwap(neo_address, phantasma_address, amount, last_swap_index);
+
+            return "ok";
+        }
+        #endregion
 
         #region PROTOCOL API
         private static readonly byte[] inbox_prefix = { (byte)'M', (byte)'B', (byte)'O', (byte)'X' };
@@ -294,6 +337,9 @@ namespace Neo.SmartContract
 
         [DisplayName("whitelist_remove")]
         public static event Action<byte[]> OnWhitelistRemove;
+
+        [DisplayName("chain_swap")]
+        public static event Action<byte[], byte[], BigInteger, BigInteger> OnChainSwap;
 
         // checks if address is on the whitelist
         public static string CheckKYC(byte[] addressScriptHash)
