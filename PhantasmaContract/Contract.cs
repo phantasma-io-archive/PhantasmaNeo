@@ -21,7 +21,6 @@ using Neo.SmartContract.Framework.Services.System;
 using System;
 using System.ComponentModel;
 using System.Numerics;
-using System.Text;
 
 namespace Neo.SmartContract
 {
@@ -104,16 +103,14 @@ namespace Neo.SmartContract
 
                 if (operation == "whitelistAdd")
                 {
-                    if (args.Length != 1) return "invalid args";
-                    object[] addresses = (object[])args[0];
-                    return WhitelistAdd(addresses);
+                    if (args.Length == 0) return "invalid args";
+                    return WhitelistAdd(args);
                 }
 
                 if (operation == "whitelistRemove")
                 {
-                    if (args.Length != 1) return "invalid args";
-                    object[] addresses = (object[])args[0];
-                    return WhitelistRemove(addresses);
+                    if (args.Length == 0) return "invalid args";
+                    return WhitelistRemove(args);
                 }
 
                 if (operation == "transfer")
@@ -352,10 +349,13 @@ namespace Neo.SmartContract
         [DisplayName("chain_swap")]
         public static event Action<byte[], byte[], BigInteger, BigInteger> OnChainSwap;
 
+        private static readonly byte[] whitelist_prefix = { (byte)'W', (byte)'L', (byte)'S', (byte)'T' };
+
         // checks if address is on the whitelist
         public static string WhitelistCheck(byte[] addressScriptHash)
         {
-            var val = Storage.Get(Storage.CurrentContext, addressScriptHash).AsBigInteger();
+            var key = whitelist_prefix.Concat(addressScriptHash);
+            var val = Storage.Get(Storage.CurrentContext, key).AsBigInteger();
             if (val > 0) return "on";
             else return "off";
         }
@@ -371,8 +371,9 @@ namespace Neo.SmartContract
             foreach (var entry in addresses)
             {
                 var addressScriptHash = (byte[])entry;
+                var key = whitelist_prefix.Concat(addressScriptHash);
 
-                var val = Storage.Get(Storage.CurrentContext, addressScriptHash).AsBigInteger();
+                var val = Storage.Get(Storage.CurrentContext, key).AsBigInteger();
 
                 if (val > 0)
                 {
@@ -380,7 +381,7 @@ namespace Neo.SmartContract
                 }
 
                 val = 1;
-                Storage.Put(Storage.CurrentContext, addressScriptHash, val);
+                Storage.Put(Storage.CurrentContext, key, val);
 
                 OnWhitelistAdd(addressScriptHash);
             }
@@ -399,8 +400,9 @@ namespace Neo.SmartContract
             foreach (var entry in addresses)
             {
                 var addressScriptHash = (byte[])entry;
+                var key = whitelist_prefix.Concat(addressScriptHash);
 
-                var val = Storage.Get(Storage.CurrentContext, addressScriptHash).AsBigInteger();
+                var val = Storage.Get(Storage.CurrentContext, key).AsBigInteger();
 
                 if (val == 0)
                 {
@@ -412,7 +414,7 @@ namespace Neo.SmartContract
                     continue;
                 }
 
-                Storage.Delete(Storage.CurrentContext, addressScriptHash);
+                Storage.Delete(Storage.CurrentContext, key);
 
                 OnWhitelistRemove(addressScriptHash);
             }
@@ -533,15 +535,18 @@ namespace Neo.SmartContract
                 tokens_to_give = tokens_available;
             }
 
-            var balance = Storage.Get(Storage.CurrentContext, sender).AsBigInteger();
+            var key = whitelist_prefix.Concat(sender);
 
-            if (balance <= 0) // not whitelisted
+            var whitelist_entry = Storage.Get(Storage.CurrentContext, key).AsBigInteger();
+
+            if (whitelist_entry <= 0) // not whitelisted
             {
                 tokens_to_refund += tokens_to_give;
                 tokens_to_give = 0;
             }
             else
             {
+                var balance = Storage.Get(Storage.CurrentContext, sender).AsBigInteger();
                 var new_balance = tokens_to_give + balance;
 
                 // check individual cap
