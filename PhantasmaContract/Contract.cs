@@ -63,6 +63,12 @@ namespace Neo.SmartContract
                     byte[] name = (byte[])args[1];
                     return RegisterInbox(owner, name);
                 }
+                if (operation == "unregisterInbox")
+                {
+                    if (args.Length != 1) return false;
+                    byte[] owner = (byte[])args[0];
+                    return UnregisterInbox(owner);
+                }
                 if (operation == "sendMessage")
                 {
                     if (args.Length != 3) return false;
@@ -70,6 +76,13 @@ namespace Neo.SmartContract
                     byte[] to = (byte[])args[1];
                     byte[] hash = (byte[])args[2];
                     return SendMessage(owner, to, hash);
+                }
+                if (operation == "removeMessage")
+                {
+                    if (args.Length != 2) return false;
+                    byte[] owner = (byte[])args[0];
+                    byte[] hash = (byte[])args[1];
+                    return RemoveMessage(owner, hash);
                 }
                 if (operation == "getInboxCount")
                 {
@@ -228,6 +241,22 @@ namespace Neo.SmartContract
             return true;
         }
 
+        private static bool UnregisterInbox(byte[] owner)
+        {
+            if (!Runtime.CheckWitness(owner)) return false;
+            //if (!VerifySignature(owner, signature)) return false;
+
+            // delete reverse mapping address => name
+            var key = address_prefix.Concat(owner);
+            var mailbox = Storage.Get(Storage.CurrentContext, key);
+            Storage.Delete(Storage.CurrentContext, key);
+
+            // delete mapping name => address
+            key = inbox_prefix.Concat(mailbox);
+            Storage.Delete(Storage.CurrentContext, key);
+            return true;
+        }
+
         private static bool SendMessage(byte[] owner, byte[] to, byte[] hash)
         {
             if (!Runtime.CheckWitness(owner)) return false;
@@ -258,9 +287,39 @@ namespace Neo.SmartContract
 
             // save mail content / hash
             Storage.Put(Storage.CurrentContext, key, hash);
-
             return true;
+        }
 
+        // Delete received message from inbox.
+        // Very slow. Each Get costs 0.1 gas
+        // Search by "hash" (value) is not ideal since it's content-dependent
+        private static bool RemoveMessage(byte[] owner, byte[] hash)
+        {
+            if (!Runtime.CheckWitness(owner)) return false;
+
+            var key = inbox_prefix.Concat(owner);
+            var value = Storage.Get(Storage.CurrentContext, key);
+            // verify if name exists
+            if (value == null) return false;
+
+            // get mailbox current size
+            key = inbox_size_prefix.Concat(owner);
+            var mailcount = Storage.Get(Storage.CurrentContext, key).AsBigInteger();
+
+            var basekey = inbox_content_prefix.Concat(owner);
+
+            for (BigInteger i = 0; i < mailcount; i = i+1)
+            {
+                key = basekey.Concat(i.AsByteArray());
+                var val = Storage.Get(Storage.CurrentContext, key);
+                if (val == hash)
+                {
+                    Storage.Delete(Storage.CurrentContext, key);
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private static BigInteger GetInboxCount(byte[] mailbox)
