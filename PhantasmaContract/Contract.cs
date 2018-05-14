@@ -468,11 +468,6 @@ namespace Neo.SmartContract
                     continue;
                 }
 
-                if (val > 1)
-                {
-                    continue;
-                }
-
                 Storage.Delete(Storage.CurrentContext, key);
 
                 OnWhitelistRemove(addressScriptHash);
