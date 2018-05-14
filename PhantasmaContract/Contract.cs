@@ -79,10 +79,11 @@ namespace Neo.SmartContract
                 }
                 if (operation == "removeMessage")
                 {
-                    if (args.Length != 2) return false;
+                    if (args.Length != 3) return false;
                     byte[] owner = (byte[])args[0];
-                    byte[] hash = (byte[])args[1];
-                    return RemoveMessage(owner, hash);
+                    BigInteger index = (BigInteger)args[1];
+                    byte[] hash = (byte[])args[2];
+                    return RemoveMessage(owner, index, hash);
                 }
                 if (operation == "getInboxCount")
                 {
@@ -290,12 +291,11 @@ namespace Neo.SmartContract
             return true;
         }
 
-        // Delete received message from inbox.
-        // Very slow. Each Get costs 0.1 gas
-        // Search by "hash" (value) is not ideal since it's content-dependent
-        private static bool RemoveMessage(byte[] owner, byte[] hash)
+        // Delete received message from inbox. By Index, with an optional content hash check
+        private static bool RemoveMessage(byte[] owner, BigInteger index, byte[] hash)
         {
             if (!Runtime.CheckWitness(owner)) return false;
+            if (index < 0) return false;
 
             var key = inbox_prefix.Concat(owner);
             var value = Storage.Get(Storage.CurrentContext, key);
@@ -303,23 +303,27 @@ namespace Neo.SmartContract
             if (value == null) return false;
 
             // get mailbox current size
-            key = inbox_size_prefix.Concat(owner);
-            var mailcount = Storage.Get(Storage.CurrentContext, key).AsBigInteger();
+            var sizekey = inbox_size_prefix.Concat(owner);
+            var mailcount = Storage.Get(Storage.CurrentContext, sizekey).AsBigInteger();
+            if (!(index < mailcount)) return false;
 
             var basekey = inbox_content_prefix.Concat(owner);
+            var lastkey = basekey.Concat((mailcount-1).AsByteArray());
+            var indexkey= basekey.Concat(index.AsByteArray());
 
-            for (BigInteger i = 0; i < mailcount; i = i+1)
+            if (hash.AsBigInteger() != 0)
             {
-                key = basekey.Concat(i.AsByteArray());
-                var val = Storage.Get(Storage.CurrentContext, key);
-                if (val == hash)
-                {
-                    Storage.Delete(Storage.CurrentContext, key);
-                    return true;
-                }
+                // check if this is the right message to delete
+                var indexval = Storage.Get(Storage.CurrentContext, lastkey);
+                if (indexval != hash)  return false;
             }
 
-            return false;
+            // move last value to the removed index
+            var lastval = Storage.Get(Storage.CurrentContext, lastkey);
+            Storage.Put(Storage.CurrentContext, indexkey, lastval);
+            // decrease mailbox size
+            Storage.Put(Storage.CurrentContext, sizekey, mailcount-1);
+            return true;
         }
 
         private static BigInteger GetInboxCount(byte[] mailbox)
