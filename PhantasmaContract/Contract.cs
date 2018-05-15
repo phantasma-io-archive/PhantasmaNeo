@@ -637,6 +637,10 @@ namespace Neo.SmartContract
         // initialization parameters, only once
         public static bool Deploy()
         {
+            // Only Team/Admmin/Owner can deploy
+            if (!Runtime.CheckWitness(Team_Address))
+                return false;
+
             var current_total_supply = Storage.Get(Storage.CurrentContext, "totalSupply").AsBigInteger();
             if (current_total_supply != 0)
             {
