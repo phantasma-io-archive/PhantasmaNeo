@@ -5,3 +5,4 @@ PhantasmaContract/.vs/
 PhantasmaContract/bin/
 packages/
 ContractTests/bin/
+ContractTests/obj/
