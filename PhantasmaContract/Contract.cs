@@ -285,6 +285,12 @@ namespace Neo.SmartContract
             // delete mapping name => address
             key = inbox_prefix.Concat(mailbox);
             Storage.Delete(Storage.CurrentContext, key);
+
+            // delete inbox size
+            key = inbox_size_prefix.Concat(mailbox);
+            Storage.Delete(Storage.CurrentContext, key);
+
+            // Should we also delete all the messages?
             return true;
         }
 
@@ -295,16 +301,16 @@ namespace Neo.SmartContract
             return SendMessageVerified(to, hash);
         }
 
-        private static bool SendMessageVerified(byte[] to, byte[] hash)
+        private static bool SendMessageVerified(byte[] to_mailbox, byte[] hash)
         {
-            var key = inbox_prefix.Concat(to);
+            var key = inbox_prefix.Concat(to_mailbox);
             var value = Storage.Get(Storage.CurrentContext, key);
 
             // verify if name exists
             if (value == null) return false;
 
             // get mailbox current size
-            key = inbox_size_prefix.Concat(to);
+            key = inbox_size_prefix.Concat(to_mailbox);
             value = Storage.Get(Storage.CurrentContext, key);
 
             // increase size and save
@@ -312,7 +318,7 @@ namespace Neo.SmartContract
             value = mailcount.AsByteArray();
             Storage.Put(Storage.CurrentContext, key, value);
 
-            key = inbox_content_prefix.Concat(to);
+            key = inbox_content_prefix.Concat(to_mailbox);
             value = mailcount.AsByteArray();
             key = key.Concat(value);
 
@@ -322,22 +328,22 @@ namespace Neo.SmartContract
         }
 
         // Delete received message from inbox. By Index, with an optional content hash check
+        // Index is 1-based
         private static bool RemoveMessage(byte[] owner, BigInteger index, byte[] hash)
         {
             if (!Runtime.CheckWitness(owner)) return false;
-            if (index < 0) return false;
+            if (index <= 0) return false;
 
-            var key = inbox_prefix.Concat(owner);
-            var value = Storage.Get(Storage.CurrentContext, key);
+            var inbox_key = inbox_prefix.Concat(owner);
+            var mailbox = Storage.Get(Storage.CurrentContext, inbox_key);
             // verify if name exists
-            if (value == null) return false;
+            if (mailbox == null) return false;
 
             // get mailbox current size
-            var sizekey = inbox_size_prefix.Concat(owner);
-            var mailcount = Storage.Get(Storage.CurrentContext, sizekey).AsBigInteger();
-            if (!(index < mailcount)) return false;
+            var mailcount = GetInboxCount(mailbox);
+            if (index > mailcount) return false;
 
-            var basekey = inbox_content_prefix.Concat(owner);
+            var basekey = inbox_content_prefix.Concat(mailbox);
             var lastkey = basekey.Concat((mailcount-1).AsByteArray());
             var indexkey= basekey.Concat(index.AsByteArray());
 
@@ -352,6 +358,7 @@ namespace Neo.SmartContract
             var lastval = Storage.Get(Storage.CurrentContext, lastkey);
             Storage.Put(Storage.CurrentContext, indexkey, lastval);
             // decrease mailbox size
+            var sizekey = inbox_size_prefix.Concat(mailbox);
             Storage.Put(Storage.CurrentContext, sizekey, mailcount-1);
             return true;
         }
@@ -361,10 +368,10 @@ namespace Neo.SmartContract
             // get mailbox current size
             var key = inbox_size_prefix.Concat(mailbox);
             var value = Storage.Get(Storage.CurrentContext, key);
-
             return value.AsBigInteger();
         }
 
+        // Index is 1-based
         private static byte[] GetInboxContent(byte[] mailbox, BigInteger index)
         {
             if (index <= 0)
@@ -372,21 +379,15 @@ namespace Neo.SmartContract
                 return null;
             }
 
-            // get mailbox current size
-            var key = inbox_size_prefix.Concat(mailbox);
-            var value = Storage.Get(Storage.CurrentContext, key);
-
-            var size = value.AsBigInteger();
-            if (index > size)
+            var mailbox_size = GetInboxCount(mailbox);
+            if (index > mailbox_size)
             {
                 return null;
             }
 
-            key = inbox_content_prefix.Concat(mailbox);
-            value = index.AsByteArray();
+            var key = inbox_content_prefix.Concat(mailbox);
+            var value = index.AsByteArray();
             key = key.Concat(value);
-
-            // save mail content / hash
             value = Storage.Get(Storage.CurrentContext, key);
             return value;
         }
