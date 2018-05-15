@@ -531,7 +531,7 @@ namespace Neo.SmartContract
         #region NEP5
         //Token Settings
         public static string Name() => "Phantasma";
-        public static string Symbol() => "SOUL";
+        public static string Symbol() => "SOUL7";
         public static byte Decimals() => 8;
 
         [DisplayName("transfer")]
@@ -657,10 +657,10 @@ namespace Neo.SmartContract
 
         #region TOKEN SALE
 
-        public static readonly byte[] Team_Address = "AGUNSWYyZDVQpzL6YbuSYc5qqbG7fDcMuZ".ToScriptHash();
-        public static readonly byte[] Advisor_Address = "AKvFhNqJUkGzHCiwrEAfSEG3fP1fNtji1F".ToScriptHash();
-        public static readonly byte[] Platform_Address = "AQFQmVQi9VReLhym1tF3UfPk4EG3VKbAwN".ToScriptHash();
-        public static readonly byte[] Presale_Address = "ARWHJefSbhayC2gurKkpjMHm5ReaJZLLJ3".ToScriptHash();
+        public static readonly byte[] Team_Address = "AH6fbe5DiEFYeWtfRdJ7GKKcb5yHGwkXEd".ToScriptHash();
+        public static readonly byte[] Advisor_Address = "ATkQKkC8fQr4XWK2P5wfAh1B4kA2UXftYA".ToScriptHash();
+        public static readonly byte[] Platform_Address = "AdD4mYSnP6mqghjQkwq71Tf7v7eMzNxHqJ".ToScriptHash();
+        public static readonly byte[] Presale_Address = "AdFf1HManU6yUXHMLq9oHYdsng4TPqMXmW".ToScriptHash();
 
         public static readonly byte[] Whitelist_Address1 = "AU3HnDtGjiH4WGPSFAGBTDXPCxZgoCnoJJ".ToScriptHash();
         public static readonly byte[] Whitelist_Address2 = "ATMSoKwfupymhmej3iLA12HabyuHPNGwDx".ToScriptHash();
@@ -691,7 +691,7 @@ namespace Neo.SmartContract
         public const ulong token_initial_cap = 10 * token_swap_rate; // max tokens than an individual can buy from to the sale in the first round, guaranteed
         public const ulong token_war_cap = 60 * token_swap_rate; // max tokens than an individual can buy from to the sale in the second round, not guaranteed
 
-        public const uint ico_start_time = 1526947200; // 22 May 00h00 UTC       
+        public const uint ico_start_time = 1; // 22 May 00h00 UTC
         public const uint ico_war_time = 1527033600; // 23 May 00h00 UTC
         public const uint ico_end_time = 1527552000; // 29 May 00h00 UTC
 
@@ -1048,25 +1048,25 @@ namespace Neo.SmartContract
             var lockStage = Storage.Get(Storage.CurrentContext, key).AsBigInteger();
 
             uint unlockTime;
-            if (lockStage == 0) { unlockTime = 1550793600; }
+            if (lockStage == 0) { unlockTime = 1; }
             else
-            if (lockStage == 1) { unlockTime = 1558483200; }
+            if (lockStage == 1) { unlockTime = 1; }
             else
-            if (lockStage == 2) { unlockTime = 1566432000; }
+            if (lockStage == 2) { unlockTime = 1; }
             else
-            if (lockStage == 3) { unlockTime = 1574380800; }
+            if (lockStage == 3) { unlockTime = 1; }
             else
-            if (lockStage == 4) { unlockTime = 1582329600; }
+            if (lockStage == 4) { unlockTime = 1; }
             else
-            if (lockStage == 5) { unlockTime = 1590105600; }
+            if (lockStage == 5) { unlockTime = 1; }
             else
-            if (lockStage == 6) { unlockTime = 1598054400; }
+            if (lockStage == 6) { unlockTime = 1; }
             else
-            if (lockStage == 7) { unlockTime = 1606003200; }
+            if (lockStage == 7) { unlockTime = 1; }
             else
-            if (lockStage == 8) { unlockTime = 1613952000; }
+            if (lockStage == 8) { unlockTime = 1; }
             else
-            if (lockStage == 9) { unlockTime = 1621641600; }
+            if (lockStage == 9) { unlockTime = 1; }
             else
             {
                 return false;
@@ -1097,25 +1097,25 @@ namespace Neo.SmartContract
             var lockStage = Storage.Get(Storage.CurrentContext, key).AsBigInteger();
 
             uint unlockTime;
-            if (lockStage == 0) { unlockTime = 1534896000; }
+            if (lockStage == 0) { unlockTime = 1; }
             else
-            if (lockStage == 1) { unlockTime = 1537574400; }
+            if (lockStage == 1) { unlockTime = 1; }
             else
-            if (lockStage == 2) { unlockTime = 1540166400; }
+            if (lockStage == 2) { unlockTime = 1; }
             else
-            if (lockStage == 3) { unlockTime = 1542844800; }
+            if (lockStage == 3) { unlockTime = 1; }
             else
-            if (lockStage == 4) { unlockTime = 1545523200; }
+            if (lockStage == 4) { unlockTime = 1; }
             else
-            if (lockStage == 5) { unlockTime = 1548115200; }
+            if (lockStage == 5) { unlockTime = 1; }
             else
-            if (lockStage == 6) { unlockTime = 1550793600; }
+            if (lockStage == 6) { unlockTime = 1; }
             else
-            if (lockStage == 7) { unlockTime = 1553212800; }
+            if (lockStage == 7) { unlockTime = 1; }
             else
-            if (lockStage == 8) { unlockTime = 1555891200; }
+            if (lockStage == 8) { unlockTime = 1; }
             else
-            if (lockStage == 9) { unlockTime = 1558483200; }
+            if (lockStage == 9) { unlockTime = 1; }
             else
             {
                 return false;
