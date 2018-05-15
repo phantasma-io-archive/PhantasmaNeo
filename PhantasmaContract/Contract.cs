@@ -260,8 +260,8 @@ namespace Neo.SmartContract
 
         private static byte[] GetInboxFromAddress(byte[] address)
         {
-            if (!ValidateAddress(address))
-                return null;
+            // unnecessary since this method only reads data
+            // if (!ValidateAddress(address)) return null;
             var key = address_prefix.Concat(address);
             byte[] value = Storage.Get(Storage.CurrentContext, key);
             return value;
@@ -269,8 +269,8 @@ namespace Neo.SmartContract
 
         private static byte[] GetAddressFromInbox(byte[] mailbox)
         {
-            if (!ValidateMailboxMame(mailbox))
-                return null;
+            // unnecessary since this method only reads data
+            // if (!ValidateMailboxMame(mailbox)) return null;
             var key = inbox_prefix.Concat(mailbox);
             byte[] value = Storage.Get(Storage.CurrentContext, key);
             return value;
@@ -391,7 +391,10 @@ namespace Neo.SmartContract
 
         private static BigInteger GetInboxCount(byte[] mailbox)
         {
-            if (!ValidateMailboxMame(mailbox)) return 0;
+            // we assume the mailbox name is never created internally,
+            // it must come as an outside input and be validated there
+            // if (!ValidateMailboxMame(mailbox)) return 0;
+
             // get mailbox current size
             var key = inbox_size_prefix.Concat(mailbox);
             var value = Storage.Get(Storage.CurrentContext, key);
@@ -401,7 +404,8 @@ namespace Neo.SmartContract
         // Index is 1-based
         private static byte[] GetInboxContent(byte[] mailbox, BigInteger index)
         {
-            if (!ValidateMailboxMame(mailbox)) return null;
+            // unnecessary, only reads data
+            // if (!ValidateMailboxMame(mailbox)) return null;
 
             if (index <= 0)
             {
@@ -472,7 +476,8 @@ namespace Neo.SmartContract
         // Get the account balance of another account with address
         public static BigInteger BalanceOf(byte[] address)
         {
-            if (!ValidateAddress(address)) return 0;
+            // unnecessary since this method only reads data
+            // if (!ValidateAddress(address)) return 0;
             return Storage.Get(Storage.CurrentContext, address).AsBigInteger();
         }
 
@@ -539,8 +544,9 @@ namespace Neo.SmartContract
         // Gets the amount of tokens allowed by 'from' address to be used by 'to' address
         public static BigInteger Allowance(byte[] from, byte[] to)
         {
-            if (!ValidateAddress(from)) return 0;
-            if (!ValidateAddress(to)) return 0;
+            // unnecessary since this method only reads data
+            // if (!ValidateAddress(from)) return 0;
+            // if (!ValidateAddress(to)) return 0;
             byte[] allowance_key = from.Concat(to);
             return Storage.Get(Storage.CurrentContext, allowance_key).AsBigInteger();
         }
@@ -591,7 +597,8 @@ namespace Neo.SmartContract
         // checks if address is on the whitelist
         public static bool WhitelistCheck(byte[] addressScriptHash)
         {
-            if (!ValidateAddress(addressScriptHash)) return false;
+            // unnecessary since this method only reads data
+            // if (!ValidateAddress(addressScriptHash)) return false;
             var key = whitelist_prefix.Concat(addressScriptHash);
             var val = Storage.Get(Storage.CurrentContext, key).AsBigInteger();
             if (val > 0) return true;
