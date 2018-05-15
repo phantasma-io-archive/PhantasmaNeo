@@ -101,12 +101,59 @@ namespace Neo.SmartContract
                 }
                 #endregion
 
-                #region SALE METHODS
-                if (operation == "deploy") return Deploy();
-                if (operation == "mintTokens") return MintTokens();
+
+                #region NEP5 METHODS
                 if (operation == "totalSupply") return TotalSupply();
                 if (operation == "name") return Name();
                 if (operation == "symbol") return Symbol();
+
+                if (operation == "transfer")
+                {
+                    if (args.Length != 3) return false;
+                    byte[] from = (byte[])args[0];
+                    byte[] to = (byte[])args[1];
+                    BigInteger value = (BigInteger)args[2];
+                    return Transfer(from, to, value);
+                }
+
+                if (operation == "balanceOf")
+                {
+                    if (args.Length != 1) return 0;
+                    byte[] account = (byte[])args[0];
+                    return BalanceOf(account);
+                }
+
+                if (operation == "decimals") return Decimals();
+                #endregion
+
+                #region NEP5.1 METHODS
+                if (operation == "allowance")
+                {
+                    byte[] from = (byte[])args[0];
+                    byte[] to = (byte[])args[1];
+                    return Allowance(from, to);
+                }
+
+                if (operation == "approve")
+                {
+                    byte[] from = (byte[])args[0];
+                    byte[] to = (byte[])args[1];
+                    BigInteger value = (BigInteger)args[2];
+                    return Approve(from, to, value);
+                }
+
+                if (operation == "transferFrom")
+                {
+                    byte[] from = (byte[])args[0];
+                    byte[] to = (byte[])args[1];
+                    BigInteger value = (BigInteger)args[2];
+                    return TransferFrom(from, to, value);
+                }
+                #endregion
+
+                #region SALE METHODS
+                if (operation == "deploy") return Deploy();
+                if (operation == "mintTokens") return MintTokens();
 
                 if (operation == "whitelistCheck")
                 {
@@ -127,23 +174,6 @@ namespace Neo.SmartContract
                     return WhitelistRemove(args);
                 }
 
-                if (operation == "transfer")
-                {
-                    if (args.Length != 3) return false;
-                    byte[] from = (byte[])args[0];
-                    byte[] to = (byte[])args[1];
-                    BigInteger value = (BigInteger)args[2];
-                    return Transfer(from, to, value);
-                }
-
-                if (operation == "balanceOf")
-                {
-                    if (args.Length != 1) return 0;
-                    byte[] account = (byte[])args[0];
-                    return BalanceOf(account);
-                }
-
-                if (operation == "decimals") return Decimals();
                 #endregion
 
                 #region CROSSCHAIN METHODS
@@ -363,11 +393,124 @@ namespace Neo.SmartContract
 
         #endregion
 
-        #region TOKEN SALE
+        #region NEP5
         //Token Settings
         public static string Name() => "Phantasma";
         public static string Symbol() => "SOUL";
         public static byte Decimals() => 8;
+
+        [DisplayName("transfer")]
+        public static event Action<byte[], byte[], BigInteger> OnTransferred;
+
+        [DisplayName("mint")]
+        public static event Action<byte[], BigInteger> OnMint;
+
+        [DisplayName("burn")]
+        public static event Action<byte[], BigInteger> OnBurn;
+
+        [DisplayName("refund")]
+        public static event Action<byte[], BigInteger> OnRefund;
+
+        [DisplayName("approve")]
+        public static event Action<byte[], byte[], BigInteger> OnApproved;
+
+        // get the total token supply
+        public static BigInteger TotalSupply()
+        {
+            return Storage.Get(Storage.CurrentContext, "totalSupply").AsBigInteger();
+        }
+
+        // function that is always called when someone wants to transfer tokens.
+        public static bool Transfer(byte[] from, byte[] to, BigInteger value)
+        {
+            if (value <= 0) return false;
+            if (!Runtime.CheckWitness(from)) return false;
+            if (from == to) return true;
+            BigInteger from_value = Storage.Get(Storage.CurrentContext, from).AsBigInteger();
+            if (from_value < value) return false;
+            if (from_value == value)
+                Storage.Delete(Storage.CurrentContext, from);
+            else
+                Storage.Put(Storage.CurrentContext, from, from_value - value);
+            BigInteger to_value = Storage.Get(Storage.CurrentContext, to).AsBigInteger();
+            Storage.Put(Storage.CurrentContext, to, to_value + value);
+            OnTransferred(from, to, value);
+            return true;
+        }
+
+        // Get the account balance of another account with address
+        public static BigInteger BalanceOf(byte[] address)
+        {
+            return Storage.Get(Storage.CurrentContext, address).AsBigInteger();
+        }
+
+        // Transfers tokens from the 'from' address to the 'to' address
+        // if the 'to' address has been given an allowance to use on behalf of the 'from' address
+        public static bool TransferFrom(byte[] from, byte[] to, BigInteger value)
+        {
+            if (value <= 0) return false;
+            if (from == to) return true;
+
+            BigInteger from_value = Storage.Get(Storage.CurrentContext, from).AsBigInteger();
+            if (from_value < value) return false;
+
+            byte[] allowance_key = from.Concat(to);
+
+            BigInteger allowance = Storage.Get(Storage.CurrentContext, allowance_key).AsBigInteger();
+
+            if (allowance < value) return false;
+
+            if (from_value == value)
+                Storage.Delete(Storage.CurrentContext, from);
+            else
+                Storage.Put(Storage.CurrentContext, from, from_value - value);
+
+            BigInteger to_value = Storage.Get(Storage.CurrentContext, to).AsBigInteger();
+            Storage.Put(Storage.CurrentContext, to, to_value + value);
+
+            if (allowance == value)
+                Storage.Delete(Storage.CurrentContext, allowance_key);
+            else
+                Storage.Put(Storage.CurrentContext, allowance_key, allowance - value);
+
+            OnTransferred(from, to, value);
+
+            return true;
+        }
+
+        // Gives approval to the 'to' address to use amount of tokens from the 'from' address
+        // This does not guarantee that the funds will be available later to be used by the 'to' address
+        public static bool Approve(byte[] from, byte[] to, BigInteger value)
+        {
+            if (value <= 0) return false;
+            if (!Runtime.CheckWitness(from)) return false;
+            if (from == to) return false;
+            BigInteger from_value = Storage.Get(Storage.CurrentContext, from).AsBigInteger();
+            if (from_value < value) return false;
+
+            byte[] allowance_key = from.Concat(to);
+
+            BigInteger current_approved_amount = Storage.Get(Storage.CurrentContext, allowance_key).AsBigInteger();
+
+            BigInteger new_approved_amount = current_approved_amount + value;
+
+            Storage.Put(Storage.CurrentContext, allowance_key, new_approved_amount);
+
+            OnApproved(from, to, current_approved_amount);
+
+            return true;
+        }
+
+        // Gets the amount of tokens allowed by 'from' address to be used by 'to' address
+        public static BigInteger Allowance(byte[] from, byte[] to)
+        {
+            byte[] allowance_key = from.Concat(to);
+            return Storage.Get(Storage.CurrentContext, allowance_key).AsBigInteger();
+        }
+
+        #endregion
+
+        #region TOKEN SALE
 
         public static readonly byte[] Team_Address = "AX7hwi7MAXMquDFQ2NSbWqyDWnjS2t7MNJ".ToScriptHash();
         public static readonly byte[] Platform_Address = "ALD9pd6nsWKZbB64Uni3JtDAEQ6ejSjdtJ".ToScriptHash();        
@@ -390,18 +533,6 @@ namespace Neo.SmartContract
         private const uint ico_start_time = 1526947200; // 22 May 00h00 UTC
         private const uint ico_war_time = 1526958000; // 22 May 03h00 UTC
         private const uint ico_end_time = 1527552000; // 29 May 00h00 UTC
-
-        [DisplayName("transfer")]
-        public static event Action<byte[], byte[], BigInteger> OnTransferred;
-
-        [DisplayName("mint")]
-        public static event Action<byte[], BigInteger> OnMint;
-
-        [DisplayName("burn")]
-        public static event Action<byte[], BigInteger> OnBurn;
-
-        [DisplayName("refund")]
-        public static event Action<byte[], BigInteger> OnRefund;
 
         [DisplayName("whitelist_add")]
         public static event Action<byte[]> OnWhitelistAdd;
@@ -536,35 +667,6 @@ namespace Neo.SmartContract
             return true;
         }
 
-        // get the total token supply
-        public static BigInteger TotalSupply()
-        {
-            return Storage.Get(Storage.CurrentContext, "totalSupply").AsBigInteger();
-        }
-
-        // function that is always called when someone wants to transfer tokens.
-        public static bool Transfer(byte[] from, byte[] to, BigInteger value)
-        {
-            if (value <= 0) return false;
-            if (!Runtime.CheckWitness(from)) return false;
-            if (from == to) return true;
-            BigInteger from_value = Storage.Get(Storage.CurrentContext, from).AsBigInteger();
-            if (from_value < value) return false;
-            if (from_value == value)
-                Storage.Delete(Storage.CurrentContext, from);
-            else
-                Storage.Put(Storage.CurrentContext, from, from_value - value);
-            BigInteger to_value = Storage.Get(Storage.CurrentContext, to).AsBigInteger();
-            Storage.Put(Storage.CurrentContext, to, to_value + value);
-            OnTransferred(from, to, value);
-            return true;
-        }
-
-        // Get the account balance of another account with address
-        public static BigInteger BalanceOf(byte[] address)
-        {
-            return Storage.Get(Storage.CurrentContext, address).AsBigInteger();
-        }
 
         //  Check how many tokens can be purchased given sender, amount of neo and current conditions
         private static BigInteger CheckPurchaseAmount(byte[] sender, BigInteger neo_value, bool apply)
