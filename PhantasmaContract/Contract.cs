@@ -31,7 +31,7 @@ namespace Neo.SmartContract
         {
             if (address.Length != 20)
                 return false;
-            if (address.AsBigInteger().IsZero)
+            if (address.AsBigInteger() == 0)
                 return false;
             return true;
         }
@@ -40,7 +40,7 @@ namespace Neo.SmartContract
         {
             if (mailbox_name.Length < 5 || mailbox_name.Length > 20)
                 return false;
-            if (mailbox_name.AsBigInteger().IsZero)
+            if (mailbox_name.AsBigInteger() == 0)
                 return false;
             return true;
         }
@@ -127,7 +127,6 @@ namespace Neo.SmartContract
                     return GetInboxContent(mailbox, index);
                 }
                 #endregion
-
 
                 #region NEP5 METHODS
                 if (operation == "totalSupply") return TotalSupply();
@@ -664,7 +663,7 @@ namespace Neo.SmartContract
 
                 var key = whitelist_prefix.Concat(addressScriptHash);
                 var val = Storage.Get(Storage.CurrentContext, key).AsBigInteger();
-                if (val.IsZero)
+                if (val == 0)
                 {
                     continue;
                 }
