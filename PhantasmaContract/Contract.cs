@@ -157,20 +157,20 @@ namespace Neo.SmartContract
 
                 if (operation == "whitelistCheck")
                 {
-                    if (args.Length != 1) return "invalid args";
+                    if (args.Length != 1) return false;
                     byte[] address = (byte[])args[0];
                     return WhitelistCheck(address);
                 }
 
                 if (operation == "whitelistAdd")
                 {
-                    if (args.Length == 0) return "invalid args";
+                    if (args.Length == 0) return false;
                     return WhitelistAdd(args);
                 }
 
                 if (operation == "whitelistRemove")
                 {
-                    if (args.Length == 0) return "invalid args";
+                    if (args.Length == 0) return false;
                     return WhitelistRemove(args);
                 }
 
@@ -197,9 +197,10 @@ namespace Neo.SmartContract
         }
 
         #region CROSSCHAIN API
-        private static string ExecuteChainSwap(byte[] neo_address, byte[] phantasma_address, BigInteger amount)
+        private static bool ExecuteChainSwap(byte[] neo_address, byte[] phantasma_address, BigInteger amount)
         {
-            if (!Runtime.CheckWitness(neo_address)) return "invalid owner";
+            if (!Runtime.CheckWitness(neo_address))
+                return false;
 
            if (amount <= 0)
                 return false;
@@ -207,9 +208,7 @@ namespace Neo.SmartContract
             var balance = BalanceOf(neo_address);
 
             if (balance < amount)
-            {
-                return "not enough balance";
-            }
+                return false;
 
             // burn those tokens in this chain
             balance -= amount;
@@ -227,7 +226,7 @@ namespace Neo.SmartContract
             // do a notify event
             OnChainSwap(neo_address, phantasma_address, amount, last_swap_index);
 
-            return "ok";
+            return true;
         }
         #endregion
 
@@ -552,12 +551,12 @@ namespace Neo.SmartContract
         private static readonly byte[] whitelist_prefix = { (byte)'W', (byte)'L', (byte)'S', (byte)'T' };
 
         // checks if address is on the whitelist
-        public static string WhitelistCheck(byte[] addressScriptHash)
+        public static bool WhitelistCheck(byte[] addressScriptHash)
         {
             var key = whitelist_prefix.Concat(addressScriptHash);
             var val = Storage.Get(Storage.CurrentContext, key).AsBigInteger();
-            if (val > 0) return "on";
-            else return "off";
+            if (val > 0) return true;
+            else return false;
         }
 
         private static bool IsWhitelistingWitness()
@@ -578,12 +577,10 @@ namespace Neo.SmartContract
         }
 
         // adds address to the whitelist
-        public static string WhitelistAdd(object[] addresses)
+        public static bool WhitelistAdd(object[] addresses)
         {
             if (!IsWhitelistingWitness())
-            {
-                return "not owner";
-            }
+                return false;
 
             foreach (var entry in addresses)
             {
@@ -603,16 +600,14 @@ namespace Neo.SmartContract
                 OnWhitelistAdd(addressScriptHash);
             }
 
-            return "ok";
+            return true;
         }
 
         // removes address from the whitelist
-        public static string WhitelistRemove(object[] addresses)
+        public static bool WhitelistRemove(object[] addresses)
         {
             if (!IsWhitelistingWitness())
-            {
-                return "not owner";
-            }
+                return false;
 
             foreach (var entry in addresses)
             {
@@ -631,7 +626,7 @@ namespace Neo.SmartContract
                 OnWhitelistRemove(addressScriptHash);
             }
 
-            return "ok";
+            return true;
         }
 
         // initialization parameters, only once
