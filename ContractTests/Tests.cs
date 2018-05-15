@@ -16,11 +16,26 @@ namespace PhantasmaTests
     {
         private byte[] contractBytes;
 
+        private string ContractFolder;
+
         [OneTimeSetUp]
         public void FixtureSetUp()
         {
+            var temp = TestContext.CurrentContext.TestDirectory.Split(new char[] { '\\', '/' }).ToList();
+
+            for (int i=0; i<3; i++)
+            {
+                temp.RemoveAt(temp.Count - 1);
+            }
+
+            temp.Add("PhantasmaContract");
+            temp.Add("bin");
+            temp.Add("Debug");
+
+            ContractFolder = String.Join("\\", temp.ToArray());
+
             // path is hardcoded for now...
-            contractBytes = File.ReadAllBytes(@"D:\Code\Phantasma\PhantasmaContract\bin\Debug\PhantasmaContract.avm");
+            contractBytes = File.ReadAllBytes(ContractFolder  +  "PhantasmaContract.avm");
         }
 
         [Test]
