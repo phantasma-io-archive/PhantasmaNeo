@@ -696,21 +696,24 @@ namespace Neo.SmartContract
         private static BigInteger CheckPurchaseAmount(byte[] sender, BigInteger neo_value, bool apply)
         {
             BigInteger tokens_to_refund = 0;
-            BigInteger tokens_to_give = (neo_value / neo_decimals) * token_swap_rate;
+            BigInteger tokens_to_give = 0;
 
-            //Runtime.Notify(new object[] { "NEO", neo_value });
-            //Runtime.Notify(new object[] { "SOUL", tokens_to_give });
+            var cur_time = Runtime.Time;
+            if (cur_time >= ico_end_time || cur_time < ico_start_time)
+            {
+                // most common case
+                if (apply == false)
+                    return 0;
+
+                tokens_to_refund = tokens_to_give;
+            }
+            else
+            {
+                tokens_to_give = (neo_value / neo_decimals) * token_swap_rate;
+            }
 
             BigInteger current_supply = Storage.Get(Storage.CurrentContext, "totalSupply").AsBigInteger();
             BigInteger tokens_available = max_supply - current_supply;
-
-            var cur_time = Runtime.Time;
-
-            if (cur_time < ico_start_time || cur_time >= ico_end_time)
-            {
-                tokens_to_refund = tokens_to_give;
-                tokens_to_give = 0;
-            }
 
             // check global hard cap
             if (tokens_to_give > tokens_available)
@@ -720,9 +723,7 @@ namespace Neo.SmartContract
             }
 
             var key = whitelist_prefix.Concat(sender);
-
             var whitelist_entry = Storage.Get(Storage.CurrentContext, key).AsBigInteger();
-
             if (whitelist_entry <= 0) // not whitelisted
             {
                 tokens_to_refund += tokens_to_give;
