@@ -61,6 +61,12 @@ namespace Neo.SmartContract
                 {
                     return true;
                 }
+
+                // Check if attached assets are accepted
+                byte[] sender = GetSender();
+                var neo_value = GetContributeValue();
+                var purchase_amount = CheckPurchaseAmount(sender, neo_value, false);
+                return purchase_amount > 0;
             }
             else if (Runtime.Trigger == TriggerType.Application)
             {
@@ -209,12 +215,7 @@ namespace Neo.SmartContract
                 #endregion
             }
 
-            //refund if not can purchase
-            byte[] sender = GetSender();
-            var neo_value = GetContributeValue();
-
-            var purchase_amount = CheckPurchaseAmount(sender, neo_value, false);
-            return purchase_amount > 0;
+            return false;
         }
 
         #region CROSSCHAIN API
