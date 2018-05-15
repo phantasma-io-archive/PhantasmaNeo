@@ -222,7 +222,8 @@ namespace Neo.SmartContract
         {
             if (!Runtime.CheckWitness(neo_address))
                 return false;
-            if (!ValidateAddress(phantasma_address))
+
+            if (phantasma_address == null || phantasma_address.Length<20)
                 return false;
 
            if (amount <= 0)
