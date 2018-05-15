@@ -7,14 +7,12 @@ Author: Sérgio Flores
 
 Phantasma mail protocol 
 
-txid: 0xf1f418b3235214aba77bb9ecd72b820c3f74419835aa58f045e195d88aba996a
-
-script hash: 0xde1a53be359e8be9f3d11627bcca40548a2d5bc1
-
-
-pubkey: 029ada24a94e753729768b90edee9d24ec9027cb64cea406f8ab296fce264597f4
+txid: <to fill>
+script hash: <to fill>
+pubkey: <to fill>
 
 */
+
 using Neo.SmartContract.Framework;
 using Neo.SmartContract.Framework.Services.Neo;
 using Neo.SmartContract.Framework.Services.System;
@@ -26,7 +24,30 @@ namespace Neo.SmartContract
 {
     public class PhantasmaContract : Framework.SmartContract
     {
-        //  params: 0710
+
+        #region UTILITY METHODS
+
+        private static bool ValidateAddress(byte[] address)
+        {
+            if (address.Length != 20)
+                return false;
+            if (address.AsBigInteger().IsZero)
+                return false;
+            return true;
+        }
+
+        private static bool ValidateMailboxMame(byte[] mailbox_name)
+        {
+            if (mailbox_name.Length < 5 || mailbox_name.Length > 20)
+                return false;
+            if (mailbox_name.AsBigInteger().IsZero)
+                return false;
+            return true;
+        }
+
+        #endregion
+
+        // params: 0710
         // return : 05
 
         public static Object Main(string operation, params object[] args)
@@ -201,12 +222,13 @@ namespace Neo.SmartContract
         {
             if (!Runtime.CheckWitness(neo_address))
                 return false;
+            if (!ValidateAddress(phantasma_address))
+                return false;
 
            if (amount <= 0)
                 return false;
 
             var balance = BalanceOf(neo_address);
-
             if (balance < amount)
                 return false;
 
@@ -238,6 +260,8 @@ namespace Neo.SmartContract
 
         private static byte[] GetInboxFromAddress(byte[] address)
         {
+            if (!ValidateAddress(address))
+                return null;
             var key = address_prefix.Concat(address);
             byte[] value = Storage.Get(Storage.CurrentContext, key);
             return value;
@@ -245,6 +269,8 @@ namespace Neo.SmartContract
 
         private static byte[] GetAddressFromInbox(byte[] mailbox)
         {
+            if (!ValidateMailboxMame(mailbox))
+                return null;
             var key = inbox_prefix.Concat(mailbox);
             byte[] value = Storage.Get(Storage.CurrentContext, key);
             return value;
@@ -254,6 +280,7 @@ namespace Neo.SmartContract
         {
             if (!Runtime.CheckWitness(owner)) return false;
             //if (!VerifySignature(owner, signature)) return false;
+            if (!ValidateMailboxMame(mailbox)) return false;
 
             // verify if name already in use
             var inbox_key = inbox_prefix.Concat(mailbox);
@@ -275,7 +302,6 @@ namespace Neo.SmartContract
         private static bool UnregisterInbox(byte[] owner)
         {
             if (!Runtime.CheckWitness(owner)) return false;
-            //if (!VerifySignature(owner, signature)) return false;
 
             // delete reverse mapping address => name
             var key = address_prefix.Concat(owner);
@@ -294,11 +320,11 @@ namespace Neo.SmartContract
             return true;
         }
 
-        private static bool SendMessage(byte[] owner, byte[] to, byte[] hash)
+        private static bool SendMessage(byte[] owner, byte[] to_mailbox, byte[] hash)
         {
             if (!Runtime.CheckWitness(owner)) return false;
 
-            return SendMessageVerified(to, hash);
+            return SendMessageVerified(to_mailbox, hash);
         }
 
         private static bool SendMessageVerified(byte[] to_mailbox, byte[] hash)
@@ -365,6 +391,7 @@ namespace Neo.SmartContract
 
         private static BigInteger GetInboxCount(byte[] mailbox)
         {
+            if (!ValidateMailboxMame(mailbox)) return 0;
             // get mailbox current size
             var key = inbox_size_prefix.Concat(mailbox);
             var value = Storage.Get(Storage.CurrentContext, key);
@@ -374,6 +401,8 @@ namespace Neo.SmartContract
         // Index is 1-based
         private static byte[] GetInboxContent(byte[] mailbox, BigInteger index)
         {
+            if (!ValidateMailboxMame(mailbox)) return null;
+
             if (index <= 0)
             {
                 return null;
@@ -426,6 +455,7 @@ namespace Neo.SmartContract
         {
             if (value <= 0) return false;
             if (!Runtime.CheckWitness(from)) return false;
+            if (!ValidateAddress(to)) return false;
             if (from == to) return true;
             BigInteger from_value = Storage.Get(Storage.CurrentContext, from).AsBigInteger();
             if (from_value < value) return false;
@@ -442,6 +472,7 @@ namespace Neo.SmartContract
         // Get the account balance of another account with address
         public static BigInteger BalanceOf(byte[] address)
         {
+            if (!ValidateAddress(address)) return 0;
             return Storage.Get(Storage.CurrentContext, address).AsBigInteger();
         }
 
@@ -449,6 +480,8 @@ namespace Neo.SmartContract
         // if the 'to' address has been given an allowance to use on behalf of the 'from' address
         public static bool TransferFrom(byte[] from, byte[] to, BigInteger value)
         {
+            if (!ValidateAddress(from)) return false;
+            if (!ValidateAddress(to)) return false;
             if (value <= 0) return false;
             if (from == to) return true;
 
@@ -485,6 +518,7 @@ namespace Neo.SmartContract
         {
             if (value <= 0) return false;
             if (!Runtime.CheckWitness(from)) return false;
+            if (!ValidateAddress(to)) return false;
             if (from == to) return false;
             BigInteger from_value = Storage.Get(Storage.CurrentContext, from).AsBigInteger();
             if (from_value < value) return false;
@@ -505,6 +539,8 @@ namespace Neo.SmartContract
         // Gets the amount of tokens allowed by 'from' address to be used by 'to' address
         public static BigInteger Allowance(byte[] from, byte[] to)
         {
+            if (!ValidateAddress(from)) return 0;
+            if (!ValidateAddress(to)) return 0;
             byte[] allowance_key = from.Concat(to);
             return Storage.Get(Storage.CurrentContext, allowance_key).AsBigInteger();
         }
@@ -555,6 +591,7 @@ namespace Neo.SmartContract
         // checks if address is on the whitelist
         public static bool WhitelistCheck(byte[] addressScriptHash)
         {
+            if (!ValidateAddress(addressScriptHash)) return false;
             var key = whitelist_prefix.Concat(addressScriptHash);
             var val = Storage.Get(Storage.CurrentContext, key).AsBigInteger();
             if (val > 0) return true;
@@ -587,10 +624,11 @@ namespace Neo.SmartContract
             foreach (var entry in addresses)
             {
                 var addressScriptHash = (byte[])entry;
+                if (!ValidateAddress(addressScriptHash))
+                    continue;
+
                 var key = whitelist_prefix.Concat(addressScriptHash);
-
                 var val = Storage.Get(Storage.CurrentContext, key).AsBigInteger();
-
                 if (val > 0)
                 {
                     continue;
@@ -598,7 +636,6 @@ namespace Neo.SmartContract
 
                 val = 1;
                 Storage.Put(Storage.CurrentContext, key, val);
-
                 OnWhitelistAdd(addressScriptHash);
             }
 
@@ -614,17 +651,17 @@ namespace Neo.SmartContract
             foreach (var entry in addresses)
             {
                 var addressScriptHash = (byte[])entry;
+                if (!ValidateAddress(addressScriptHash))
+                    continue;
+
                 var key = whitelist_prefix.Concat(addressScriptHash);
-
                 var val = Storage.Get(Storage.CurrentContext, key).AsBigInteger();
-
-                if (val == 0)
+                if (val.IsZero)
                 {
                     continue;
                 }
 
                 Storage.Delete(Storage.CurrentContext, key);
-
                 OnWhitelistRemove(addressScriptHash);
             }
 
@@ -687,12 +724,12 @@ namespace Neo.SmartContract
             // adjust total supply
             var current_total_supply = Storage.Get(Storage.CurrentContext, "totalSupply").AsBigInteger();
             Storage.Put(Storage.CurrentContext, "totalSupply", current_total_supply + token_amount);
-
             return true;
         }
 
 
         //  Check how many tokens can be purchased given sender, amount of neo and current conditions
+        // only called from a verified context
         private static BigInteger CheckPurchaseAmount(byte[] sender, BigInteger neo_value, bool apply)
         {
             BigInteger tokens_to_refund = 0;
@@ -755,7 +792,6 @@ namespace Neo.SmartContract
                 {
                     // mint tokens to sender
                     CreditTokensToAddress(sender, tokens_to_give);
-
                     Storage.Put(Storage.CurrentContext, "totalSupply", current_supply + tokens_to_give);
                 }
             }
@@ -803,6 +839,7 @@ namespace Neo.SmartContract
             return value;
         }
 
+        // only called from a verified context
         private static void CreditTokensToAddress(byte[] addressScriptHash, BigInteger amount)
         {
             var balance = Storage.Get(Storage.CurrentContext, addressScriptHash).AsBigInteger();
