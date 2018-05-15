@@ -515,7 +515,13 @@ namespace Neo.SmartContract
         public static readonly byte[] Team_Address = "AX7hwi7MAXMquDFQ2NSbWqyDWnjS2t7MNJ".ToScriptHash();
         public static readonly byte[] Platform_Address = "ALD9pd6nsWKZbB64Uni3JtDAEQ6ejSjdtJ".ToScriptHash();        
         public static readonly byte[] Presale_Address = "AShRtCXAfzXtkFKgnjjeFpyNnGHjP6hzJ5".ToScriptHash();
-        public static readonly byte[] Whitelist_Address = "AWUtY1cefNshv9xWZVGyKVMmB1Tm5eAzhi".ToScriptHash();
+
+        public static readonly byte[] Whitelist_Address1 = "AU3HnDtGjiH4WGPSFAGBTDXPCxZgoCnoJJ".ToScriptHash();
+        public static readonly byte[] Whitelist_Address2 = "ATMSoKwfupymhmej3iLA12HabyuHPNGwDx".ToScriptHash();
+        public static readonly byte[] Whitelist_Address3 = "AQgTdM2NAQvbRpCcBcXJWZnfTdESHaFFdc".ToScriptHash();
+        public static readonly byte[] Whitelist_Address4 = "ALokKyd98P6EQiqoV8CdyQbs3sgAteUyX8".ToScriptHash();
+        public static readonly byte[] Whitelist_Address5 = "ALtsedMdcrbsExZc6hr2va8cAzfia99ViU".ToScriptHash();
+        public static readonly byte[] Whitelist_Address6 = "AeqDFJj492eDdo8Be8qhhMdSLjDZYt7k37".ToScriptHash();
 
         private const ulong soul_decimals = 100000000; //decided by Decimals()
         private const ulong neo_decimals = 100000000;
@@ -554,10 +560,27 @@ namespace Neo.SmartContract
             else return "off";
         }
 
+        private static bool IsWhitelistingWitness()
+        {
+            if (Runtime.CheckWitness(Whitelist_Address1))
+                return true;
+            if (Runtime.CheckWitness(Whitelist_Address2))
+                return true;
+            if (Runtime.CheckWitness(Whitelist_Address3))
+                return true;
+            if (Runtime.CheckWitness(Whitelist_Address4))
+                return true;
+            if (Runtime.CheckWitness(Whitelist_Address5))
+                return true;
+            if (Runtime.CheckWitness(Whitelist_Address6))
+                return true;
+            return false;
+        }
+
         // adds address to the whitelist
         public static string WhitelistAdd(object[] addresses)
         {
-            if (!Runtime.CheckWitness(Whitelist_Address))
+            if (!IsWhitelistingWitness())
             {
                 return "not owner";
             }
@@ -586,7 +609,7 @@ namespace Neo.SmartContract
         // removes address from the whitelist
         public static string WhitelistRemove(object[] addresses)
         {
-            if (!(Runtime.CheckWitness(Whitelist_Address)))
+            if (!IsWhitelistingWitness())
             {
                 return "not owner";
             }
