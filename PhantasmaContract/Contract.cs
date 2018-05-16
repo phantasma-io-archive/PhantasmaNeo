@@ -594,6 +594,7 @@ namespace Neo.SmartContract
         public static event Action<byte[], byte[], BigInteger, BigInteger> OnChainSwap;
 
         private static readonly byte[] whitelist_prefix = { (byte)'W', (byte)'L', (byte)'S', (byte)'T' };
+        private static readonly byte[] mint_prefix = { (byte)'M', (byte)'I', (byte)'N', (byte)'T' };
 
         // checks if address is on the whitelist
         public static bool WhitelistCheck(byte[] addressScriptHash)
@@ -720,6 +721,15 @@ namespace Neo.SmartContract
                 return false;
             }
 
+            var tx_key = mint_prefix.Concat(sender);
+            var last_tx = Storage.Get(Storage.CurrentContext, tx_key);
+
+            Transaction tx = (Transaction)ExecutionEngine.ScriptContainer;
+            if (last_tx == tx.Hash)
+            {
+                return false;
+            }
+
             var contribute_value = GetContributeValue();
 
             // calculate how many tokens 
@@ -732,6 +742,8 @@ namespace Neo.SmartContract
             // adjust total supply
             var current_total_supply = Storage.Get(Storage.CurrentContext, "totalSupply").AsBigInteger();
             Storage.Put(Storage.CurrentContext, "totalSupply", current_total_supply + token_amount);
+            Storage.Put(Storage.CurrentContext, tx_key, tx.Hash);
+
             return true;
         }
 
