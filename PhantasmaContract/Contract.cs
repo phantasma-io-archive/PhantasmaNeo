@@ -539,7 +539,7 @@ namespace Neo.SmartContract
             BigInteger current_approved_amount = Storage.Get(Storage.CurrentContext, allowance_key).AsBigInteger();
             BigInteger new_approved_amount = current_approved_amount + value;
             Storage.Put(Storage.CurrentContext, allowance_key, new_approved_amount);
-            OnApproved(from, to, new_approved_amount);
+            OnApproved(from, to, value);
             return true;
         }
 
