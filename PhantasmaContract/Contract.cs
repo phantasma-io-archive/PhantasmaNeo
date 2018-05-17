@@ -568,22 +568,22 @@ namespace Neo.SmartContract
         public static readonly byte[] Whitelist_Address5 = "ALtsedMdcrbsExZc6hr2va8cAzfia99ViU".ToScriptHash();
         public static readonly byte[] Whitelist_Address6 = "AeqDFJj492eDdo8Be8qhhMdSLjDZYt7k37".ToScriptHash();
 
-        private const ulong soul_decimals = 100000000; //decided by Decimals()
-        private const ulong neo_decimals = 100000000;
+        public const ulong soul_decimals = 100000000; //decided by Decimals()
+        public const ulong neo_decimals = 100000000;
 
         //ICO Settings
-        private static readonly byte[] neo_asset_id = { 155, 124, 255, 218, 166, 116, 190, 174, 15, 147, 14, 190, 96, 133, 175, 144, 147, 229, 254, 86, 179, 74, 92, 34, 12, 205, 207, 110, 252, 51, 111, 197 };
-        private const ulong max_supply = 91136510 * soul_decimals; // total token amount
-        private const ulong team_supply = 14500000 * soul_decimals; // company token amount
-        private const ulong platform_supply = 15000000 * soul_decimals; // company token amount
-        private const ulong presale_supply = 43503435 * soul_decimals; // employee token amount
+        public static readonly byte[] neo_asset_id = { 155, 124, 255, 218, 166, 116, 190, 174, 15, 147, 14, 190, 96, 133, 175, 144, 147, 229, 254, 86, 179, 74, 92, 34, 12, 205, 207, 110, 252, 51, 111, 197 };
+        public const ulong max_supply = 91136510 * soul_decimals; // total token amount
+        public const ulong team_supply = 14500000 * soul_decimals; // company token amount
+        public const ulong platform_supply = 15000000 * soul_decimals; // company token amount
+        public const ulong presale_supply = 43503435 * soul_decimals; // employee token amount
 
-        private const ulong token_swap_rate = 273 * soul_decimals; // how many tokens you get per NEO
-        private const ulong token_individual_cap = 10 * token_swap_rate; // max tokens than an individual can buy from to the sale
+        public const ulong token_swap_rate = 273 * soul_decimals; // how many tokens you get per NEO
+        public const ulong token_individual_cap = 10 * token_swap_rate; // max tokens than an individual can buy from to the sale
 
-        private const uint ico_start_time = 1526947200; // 22 May 00h00 UTC
-        private const uint ico_war_time = 1526958000; // 22 May 03h00 UTC
-        private const uint ico_end_time = 1527552000; // 29 May 00h00 UTC
+        public const uint ico_start_time = 1526947200; // 22 May 00h00 UTC
+        public const uint ico_war_time = 1526958000; // 22 May 03h00 UTC
+        public const uint ico_end_time = 1527552000; // 29 May 00h00 UTC
 
         [DisplayName("whitelist_add")]
         public static event Action<byte[]> OnWhitelistAdd;

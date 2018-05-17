@@ -38,6 +38,7 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Numerics" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -54,6 +55,20 @@
   </ItemGroup>
   <ItemGroup>
     <Service Include="{82A7F48D-3B50-4B1E-B82E-3ADA8210C358}" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Neo.Lux\Neo.Lux\Neo.Lux.csproj">
+      <Project>{DCE50E4D-2D65-4ABC-B205-D72353565BAF}</Project>
+      <Name>Neo.Lux</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\NeoEmulator\Neo.Emulator.csproj">
+      <Project>{EF7D9656-4048-440A-B0E0-0F1CF45874C2}</Project>
+      <Name>Neo.Emulator</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\PhantasmaContract\PhantasmaContract.csproj">
+      <Project>{34A64BC7-A8D7-425B-88C0-677EE28B8938}</Project>
+      <Name>PhantasmaContract</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">

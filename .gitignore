@@ -6,3 +6,5 @@ PhantasmaContract/bin/
 packages/
 ContractTests/bin/
 ContractTests/obj/
+TestDeploy/
+NeoEmulator/
