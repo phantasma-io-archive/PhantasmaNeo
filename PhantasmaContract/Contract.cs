@@ -482,8 +482,13 @@ namespace Neo.SmartContract
             return Storage.Get(Storage.CurrentContext, address).AsBigInteger();
         }
 
+        //
+        // NEP5.1 extension methods
+        //
+
         // Transfers tokens from the 'from' address to the 'to' address
-        // if the 'to' address has been given an allowance to use on behalf of the 'from' address
+        // The Sender must have an allowance from 'From' in order to send it to the 'To'
+        // This matches the ERC20 version
         public static bool TransferFrom(byte[] from, byte[] to, BigInteger value)
         {
             if (!ValidateAddress(from)) return false;
@@ -494,10 +499,10 @@ namespace Neo.SmartContract
             BigInteger from_value = Storage.Get(Storage.CurrentContext, from).AsBigInteger();
             if (from_value < value) return false;
 
-            byte[] allowance_key = from.Concat(to);
-
+            // allowance of [from] to [sender]
+            byte[] sender = GetSender();
+            byte[] allowance_key = from.Concat(sender);
             BigInteger allowance = Storage.Get(Storage.CurrentContext, allowance_key).AsBigInteger();
-
             if (allowance < value) return false;
 
             if (from_value == value)
@@ -505,21 +510,22 @@ namespace Neo.SmartContract
             else
                 Storage.Put(Storage.CurrentContext, from, from_value - value);
 
-            BigInteger to_value = Storage.Get(Storage.CurrentContext, to).AsBigInteger();
-            Storage.Put(Storage.CurrentContext, to, to_value + value);
-
             if (allowance == value)
                 Storage.Delete(Storage.CurrentContext, allowance_key);
             else
                 Storage.Put(Storage.CurrentContext, allowance_key, allowance - value);
 
-            OnTransferred(from, to, value);
+            // Sender sends tokens to 'To'
+            BigInteger to_value = Storage.Get(Storage.CurrentContext, to).AsBigInteger();
+            Storage.Put(Storage.CurrentContext, to, to_value + value);
 
+            OnTransferred(from, to, value);
             return true;
         }
 
         // Gives approval to the 'to' address to use amount of tokens from the 'from' address
         // This does not guarantee that the funds will be available later to be used by the 'to' address
+        // 'From' is the Tx Sender. This matches the ERC20 version
         public static bool Approve(byte[] from, byte[] to, BigInteger value)
         {
             if (value <= 0) return false;
@@ -530,15 +536,10 @@ namespace Neo.SmartContract
             if (from_value < value) return false;
 
             byte[] allowance_key = from.Concat(to);
-
             BigInteger current_approved_amount = Storage.Get(Storage.CurrentContext, allowance_key).AsBigInteger();
-
             BigInteger new_approved_amount = current_approved_amount + value;
-
             Storage.Put(Storage.CurrentContext, allowance_key, new_approved_amount);
-
-            OnApproved(from, to, current_approved_amount);
-
+            OnApproved(from, to, new_approved_amount);
             return true;
         }
 
