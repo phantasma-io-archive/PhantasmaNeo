@@ -306,19 +306,19 @@ namespace Neo.SmartContract
             if (!ValidateMailboxMame(mailbox)) return false;
 
             // verify if name already in use
-            var inbox_key = box_owners_prefix.Concat(mailbox);
-            byte[] inbox_value = Storage.Get(Storage.CurrentContext, inbox_key);
-            if (inbox_value != null) return false;
+            var box_owner_key = box_owners_prefix.Concat(mailbox);
+            byte[] box_owner = Storage.Get(Storage.CurrentContext, box_owner_key);
+            if (box_owner != null) return false;
 
             // verify if address already has mailbox. must unregister first
-            var address_key = box_names_prefix.Concat(owner);
-            byte[] address_value = Storage.Get(Storage.CurrentContext, address_key);
-            if (address_value != null) return false;
+            var box_name_key = box_names_prefix.Concat(owner);
+            byte[] box_name = Storage.Get(Storage.CurrentContext, box_name_key);
+            if (box_name != null) return false;
 
             // save owner of name
-            Storage.Put(Storage.CurrentContext, inbox_key, owner);
+            Storage.Put(Storage.CurrentContext, box_owner_key, owner);
             // save reverse mapping address => name
-            Storage.Put(Storage.CurrentContext, address_key, mailbox);
+            Storage.Put(Storage.CurrentContext, box_name_key, mailbox);
             return true;
         }
 
