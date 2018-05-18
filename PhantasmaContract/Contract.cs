@@ -71,32 +71,32 @@ namespace Neo.SmartContract
             else if (Runtime.Trigger == TriggerType.Application)
             {
                 #region PROTOCOL METHODS
-                if (operation == "getInboxFromAddress")
+                if (operation == "getMailboxFromAddress")
                 {
                     if (args.Length != 1) return false;
                     byte[] address = (byte[])args[0];
-                    return GetInboxFromAddress(address);
+                    return GetMailboxFromAddress(address);
                 }
-                if (operation == "getAddressFromInbox")
+                else if (operation == "getAddressFromMailbox")
                 {
                     if (args.Length != 1) return false;
                     byte[] mailbox = (byte[])args[0];
-                    return GetAddressFromInbox(mailbox);
+                    return GetAddressFromMailbox(mailbox);
                 }
-                if (operation == "registerInbox")
+                else if (operation == "registerMailbox")
                 {
                     if (args.Length != 2) return false;
                     byte[] owner = (byte[])args[0];
                     byte[] name = (byte[])args[1];
-                    return RegisterInbox(owner, name);
+                    return RegisterMailbox(owner, name);
                 }
-                if (operation == "unregisterInbox")
+                else if (operation == "unregisterMailbox")
                 {
                     if (args.Length != 1) return false;
                     byte[] owner = (byte[])args[0];
-                    return UnregisterInbox(owner);
+                    return UnregisterMailbox(owner);
                 }
-                if (operation == "sendMessage")
+                else if (operation == "sendMessage")
                 {
                     if (args.Length != 3) return false;
                     byte[] owner = (byte[])args[0];
@@ -104,27 +104,47 @@ namespace Neo.SmartContract
                     byte[] hash = (byte[])args[2];
                     return SendMessage(owner, to, hash);
                 }
-                if (operation == "removeMessage")
+                else if (operation == "removeInboxMessage")
                 {
                     if (args.Length != 3) return false;
                     byte[] owner = (byte[])args[0];
                     BigInteger index = (BigInteger)args[1];
                     byte[] hash = (byte[])args[2];
-                    return RemoveMessage(owner, index, hash);
+                    return RemoveInboxMessage(owner, index, hash);
                 }
-                if (operation == "getInboxCount")
+                else if (operation == "removeOutboxMessage")
+                {
+                    if (args.Length != 3) return false;
+                    byte[] owner = (byte[])args[0];
+                    BigInteger index = (BigInteger)args[1];
+                    byte[] hash = (byte[])args[2];
+                    return RemoveOutboxMessage(owner, index, hash);
+                }
+                else if (operation == "getInboxCount")
                 {
                     if (args.Length != 1) return false;
                     byte[] mailbox = (byte[])args[0];
                     return GetInboxCount(mailbox);
                 }
-
-                if (operation == "getInboxContent")
+                else if (operation == "getInboxContent")
                 {
                     if (args.Length != 2) return false;
                     byte[] mailbox = (byte[])args[0];
                     BigInteger index = (BigInteger)args[1];
                     return GetInboxContent(mailbox, index);
+                }
+                else if (operation == "getOutboxCount")
+                {
+                    if (args.Length != 1) return false;
+                    byte[] mailbox = (byte[])args[0];
+                    return GetOutboxCount(mailbox);
+                }
+                else if (operation == "getOutboxContent")
+                {
+                    if (args.Length != 2) return false;
+                    byte[] mailbox = (byte[])args[0];
+                    BigInteger index = (BigInteger)args[1];
+                    return GetOutboxContent(mailbox, index);
                 }
                 #endregion
 
@@ -284,7 +304,7 @@ namespace Neo.SmartContract
         private static readonly byte[] outbox_size_prefix = { (byte)'M', (byte)'S', (byte)'O', (byte)'Z' };
         private static readonly byte[] outbox_content_prefix = { (byte)'M', (byte)'S', (byte)'O', (byte)'C' };
 
-        private static byte[] GetInboxFromAddress(byte[] address)
+        private static byte[] GetMailboxFromAddress(byte[] address)
         {
             if (!ValidateAddress(address)) return null;
             var key = box_names_prefix.Concat(address);
@@ -292,7 +312,7 @@ namespace Neo.SmartContract
             return value;
         }
 
-        private static byte[] GetAddressFromInbox(byte[] mailbox)
+        private static byte[] GetAddressFromMailbox(byte[] mailbox)
         {
             if (!ValidateMailboxMame(mailbox)) return null;
             var key = box_owners_prefix.Concat(mailbox);
@@ -300,7 +320,7 @@ namespace Neo.SmartContract
             return value;
         }
 
-        private static bool RegisterInbox(byte[] owner, byte[] mailbox)
+        private static bool RegisterMailbox(byte[] owner, byte[] mailbox)
         {
             if (!Runtime.CheckWitness(owner)) return false;
             if (!ValidateMailboxMame(mailbox)) return false;
@@ -322,7 +342,7 @@ namespace Neo.SmartContract
             return true;
         }
 
-        private static bool UnregisterInbox(byte[] owner)
+        private static bool UnregisterMailbox(byte[] owner)
         {
             if (!Runtime.CheckWitness(owner)) return false;
 
@@ -337,6 +357,10 @@ namespace Neo.SmartContract
 
             // delete inbox size
             key = inbox_size_prefix.Concat(mailbox);
+            Storage.Delete(Storage.CurrentContext, key);
+
+            // delete outbox size
+            key = outbox_size_prefix.Concat(mailbox);
             Storage.Delete(Storage.CurrentContext, key);
 
             // Should we also delete all the messages?
@@ -377,50 +401,65 @@ namespace Neo.SmartContract
             return true;
         }
 
-        // Delete received message from inbox. By Index, with an optional content hash check
+        // Delete received message from message box. By Index, with an optional content hash check
         // Index is 1-based
-        private static bool RemoveMessage(byte[] owner, BigInteger index, byte[] hash)
+        private static bool RemoveMessage(byte[] owner, BigInteger index, byte[] hash, byte[] box_count_prefix, byte[] box_content_prefix)
         {
-            if (!Runtime.CheckWitness(owner)) return false;
             if (index <= 0) return false;
+            if (!Runtime.CheckWitness(owner)) return false;
 
-            var inbox_key = box_names_prefix.Concat(owner);
-            var mailbox = Storage.Get(Storage.CurrentContext, inbox_key);
+            var mailbox_key = box_names_prefix.Concat(owner);
+            var mailbox = Storage.Get(Storage.CurrentContext, mailbox_key);
             // verify if name exists
             if (mailbox == null) return false;
 
             // get mailbox current size
-            var mailcount = GetInboxCount(mailbox);
+            var box_size_key = box_count_prefix.Concat(mailbox);
+            var mailcount = Storage.Get(Storage.CurrentContext, box_size_key).AsBigInteger();
             if (index > mailcount) return false;
 
-            var basekey = inbox_content_prefix.Concat(mailbox);
-            var lastkey = basekey.Concat((mailcount-1).AsByteArray());
-            var indexkey= basekey.Concat(index.AsByteArray());
+            var basekey = box_content_prefix.Concat(mailbox);
+            var lastkey = basekey.Concat((mailcount - 1).AsByteArray());
+            var indexkey = basekey.Concat(index.AsByteArray());
 
             if (hash.AsBigInteger() != 0)
             {
                 // check if this is the right message to delete
                 var indexval = Storage.Get(Storage.CurrentContext, lastkey);
-                if (indexval != hash)  return false;
+                if (indexval != hash) return false;
             }
 
             // move last value to the removed index
             var lastval = Storage.Get(Storage.CurrentContext, lastkey);
             Storage.Put(Storage.CurrentContext, indexkey, lastval);
             // decrease mailbox size
-            var sizekey = inbox_size_prefix.Concat(mailbox);
-            Storage.Put(Storage.CurrentContext, sizekey, mailcount-1);
+            Storage.Put(Storage.CurrentContext, box_size_key, mailcount - 1);
             return true;
         }
 
+        private static bool RemoveInboxMessage(byte[] owner, BigInteger index, byte[] hash)
+        {
+            return RemoveMessage(owner, index, hash, inbox_size_prefix, inbox_content_prefix);
+        }
+
+        private static bool RemoveOutboxMessage(byte[] owner, BigInteger index, byte[] hash)
+        {
+            return RemoveMessage(owner, index, hash, outbox_size_prefix, outbox_content_prefix);
+        }
+
+        // we assume the mailbox name is never created internally,
+        // it must come as an outside input and be validated there
+        // if (!ValidateMailboxMame(mailbox)) return 0;
         private static BigInteger GetInboxCount(byte[] mailbox)
         {
-            // we assume the mailbox name is never created internally,
-            // it must come as an outside input and be validated there
-            // if (!ValidateMailboxMame(mailbox)) return 0;
-
-            // get mailbox current size
             var key = inbox_size_prefix.Concat(mailbox);
+            var value = Storage.Get(Storage.CurrentContext, key);
+            return value.AsBigInteger();
+        }
+
+        private static BigInteger GetOutboxCount(byte[] mailbox)
+        {
+            var key = outbox_size_prefix.Concat(mailbox);
             var value = Storage.Get(Storage.CurrentContext, key);
             return value.AsBigInteger();
         }
@@ -429,23 +468,26 @@ namespace Neo.SmartContract
         private static byte[] GetInboxContent(byte[] mailbox, BigInteger index)
         {
             if (!ValidateMailboxMame(mailbox)) return null;
-
-            if (index <= 0)
-            {
-                return null;
-            }
+            if (index <= 0) return null;
 
             var mailbox_size = GetInboxCount(mailbox);
-            if (index > mailbox_size)
-            {
-                return null;
-            }
+            if (index > mailbox_size) return null;
 
-            var key = inbox_content_prefix.Concat(mailbox);
-            var value = index.AsByteArray();
-            key = key.Concat(value);
-            value = Storage.Get(Storage.CurrentContext, key);
-            return value;
+            var key = inbox_content_prefix.Concat(mailbox).Concat(index.AsByteArray());
+            return Storage.Get(Storage.CurrentContext, key);
+        }
+
+        // Index is 1-based
+        private static byte[] GetOutboxContent(byte[] mailbox, BigInteger index)
+        {
+            if (!ValidateMailboxMame(mailbox)) return null;
+            if (index <= 0) return null;
+
+            var mailbox_size = GetOutboxCount(mailbox);
+            if (index > mailbox_size) return null;
+
+            var key = outbox_content_prefix.Concat(mailbox).Concat(index.AsByteArray());
+            return Storage.Get(Storage.CurrentContext, key);
         }
 
         #endregion
