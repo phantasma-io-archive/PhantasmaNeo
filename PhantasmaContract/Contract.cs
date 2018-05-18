@@ -185,6 +185,8 @@ namespace Neo.SmartContract
                 if (operation == "deploy") return Deploy();
                 if (operation == "mintTokens") return MintTokens();
 
+                if (operation == "availableTokens") return AvailableTokens();
+
                 if (operation == "whitelistCheck")
                 {
                     if (args.Length != 1) return false;
@@ -762,6 +764,12 @@ namespace Neo.SmartContract
             return true;
         }
 
+        public static BigInteger AvailableTokens()
+        {
+            BigInteger current_supply = Storage.Get(Storage.CurrentContext, "totalSupply").AsBigInteger();
+            BigInteger tokens_available = max_supply - current_supply;
+            return tokens_available;
+        }
 
         //  Check how many tokens can be purchased given sender, amount of neo and current conditions
         // only called from a verified context
