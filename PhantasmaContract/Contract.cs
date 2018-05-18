@@ -585,11 +585,14 @@ namespace Neo.SmartContract
         //ICO Settings
         public static readonly byte[] neo_asset_id = { 155, 124, 255, 218, 166, 116, 190, 174, 15, 147, 14, 190, 96, 133, 175, 144, 147, 229, 254, 86, 179, 74, 92, 34, 12, 205, 207, 110, 252, 51, 111, 197 };
 
-        public const ulong max_supply = 91136510 * soul_decimals; // total token amount
-        public const ulong team_supply = 14500000 * soul_decimals; // company token amount
-        public const ulong advisor_supply = 5500000 * soul_decimals; // company token amount
+        public const ulong max_supply      = 91136510 * soul_decimals; // total token amount
+        public const ulong team_supply     = 14500000 * soul_decimals; // team token amount
+        public const ulong advisor_supply  =  5500000 * soul_decimals; // advisor token amount
         public const ulong platform_supply = 15000000 * soul_decimals; // company token amount
-        public const ulong presale_supply = 43503435 * soul_decimals; // employee token amount
+        public const ulong presale_supply  = 43503435 * soul_decimals; // presale token amount
+
+        public const ulong team_monthly_supply    = 1450000 * soul_decimals; // team monthly share
+        public const ulong advisor_monthly_supply =  550000 * soul_decimals; // advisor monthly share
 
         public const ulong token_swap_rate = 273 * soul_decimals; // how many tokens you get per NEO
         public const ulong token_individual_cap = 10 * token_swap_rate; // max tokens than an individual can buy from to the sale
@@ -705,9 +708,9 @@ namespace Neo.SmartContract
                 return false;
             }
 
-            var initialSupply = team_supply + presale_supply + platform_supply;
+            var initialSupply = team_supply +  advisor_supply + presale_supply + platform_supply;
 
-            // team supply is locked, storage stays at zero here
+            // team and advisor supply is locked, storage stays at zero here
 
             OnMint(Presale_Address, presale_supply);
             Storage.Put(Storage.CurrentContext, Presale_Address, presale_supply);
@@ -925,7 +928,7 @@ namespace Neo.SmartContract
             lockStage = lockStage + 1;
             Storage.Put(Storage.CurrentContext, key, lockStage);
 
-            var amount = 1450000 * soul_decimals;
+            var amount = team_monthly_supply ;
 
             CreditTokensToAddress(Team_Address, amount);
             return true;
@@ -950,7 +953,7 @@ namespace Neo.SmartContract
             else
             if (lockStage == 3) { unlockTime = 1542844800; }
             else
-            if (lockStage == 4) { unlockTime = 1608595200; }
+            if (lockStage == 4) { unlockTime = 1545523200; }
             else
             if (lockStage == 5) { unlockTime = 1548115200; }
             else
@@ -974,7 +977,7 @@ namespace Neo.SmartContract
             lockStage = lockStage + 1;
             Storage.Put(Storage.CurrentContext, key, lockStage);
 
-            var amount = 550000 * soul_decimals;
+            var amount = advisor_monthly_supply ;
 
             CreditTokensToAddress(Advisor_Address, amount);
             return true;
