@@ -344,7 +344,7 @@ namespace Neo.SmartContract
         }
 
         private static void AppendToBox(byte[] box_count_prefix, byte[] box_content_prefix, byte[] box_name, byte[] message_content)
-        {          
+        {
             // get mailbox current size
             var box_count_key = box_count_prefix.Concat(box_name);
             var value = Storage.Get(Storage.CurrentContext, box_count_key);
@@ -362,22 +362,18 @@ namespace Neo.SmartContract
             Storage.Put(Storage.CurrentContext, box_content_key, message_content);
         }
 
-        public static bool SendMessage(byte[] from_mailbox, byte[] to_mailbox, byte[] hash)
+        public static bool SendMessage(byte[] owner, byte[] to_mailbox, byte[] hash)
         {
-            if (!Runtime.CheckWitness(from_mailbox)) return false;
-
-            if (!ValidateMailboxMame(from_mailbox)) return false;
+            if (!Runtime.CheckWitness(owner)) return false;
             if (!ValidateMailboxMame(to_mailbox)) return false;
 
-            var inbox_name_key = box_name_prefix.Concat(to_mailbox);
-            var value = Storage.Get(Storage.CurrentContext, inbox_name_key);
-
+            var from_box_key = address_prefix.Concat(owner);
+            var from_mailbox = Storage.Get(Storage.CurrentContext, from_box_key);
             // verify if name exists
-            if (value == null) return false;
+            if (from_mailbox == null) return false;
 
             AppendToBox(inbox_size_prefix, inbox_content_prefix, to_mailbox, hash);
             AppendToBox(outbox_size_prefix, outbox_content_prefix, from_mailbox, hash);
-
             return true;
         }
 
@@ -388,7 +384,7 @@ namespace Neo.SmartContract
             if (!Runtime.CheckWitness(owner)) return false;
             if (index <= 0) return false;
 
-            var inbox_key = box_name_prefix.Concat(owner);
+            var inbox_key = address_prefix.Concat(owner);
             var mailbox = Storage.Get(Storage.CurrentContext, inbox_key);
             // verify if name exists
             if (mailbox == null) return false;
