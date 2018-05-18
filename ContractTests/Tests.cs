@@ -3,9 +3,8 @@ using System.IO;
 
 using NUnit.Framework;
 using System.Linq;
-using System.Collections.Generic;
 using Neo.Lux.Core;
-using NeoEmulator;
+using Neo.Emulator;
 using Neo.Lux.Utils;
 using Neo.Lux.Cryptography;
 using Neo.SmartContract;
@@ -33,7 +32,7 @@ namespace PhantasmaTests
         [OneTimeSetUp]
         public void FixtureSetUp()
         {
-            var api = new Emulator();
+            this.api = new Emulator();
 
             var temp = TestContext.CurrentContext.TestDirectory.Split(new char[] { '\\', '/' }).ToList();
 
