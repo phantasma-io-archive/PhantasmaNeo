@@ -276,8 +276,7 @@ namespace Neo.SmartContract
 
         private static byte[] GetInboxFromAddress(byte[] address)
         {
-            // unnecessary since this method only reads data
-            // if (!ValidateAddress(address)) return null;
+            if (!ValidateAddress(address)) return null;
             var key = address_prefix.Concat(address);
             byte[] value = Storage.Get(Storage.CurrentContext, key);
             return value;
@@ -285,8 +284,7 @@ namespace Neo.SmartContract
 
         private static byte[] GetAddressFromInbox(byte[] mailbox)
         {
-            // unnecessary since this method only reads data
-            // if (!ValidateMailboxMame(mailbox)) return null;
+            if (!ValidateMailboxMame(mailbox)) return null;
             var key = inbox_prefix.Concat(mailbox);
             byte[] value = Storage.Get(Storage.CurrentContext, key);
             return value;
@@ -295,7 +293,6 @@ namespace Neo.SmartContract
         private static bool RegisterInbox(byte[] owner, byte[] mailbox)
         {
             if (!Runtime.CheckWitness(owner)) return false;
-            //if (!VerifySignature(owner, signature)) return false;
             if (!ValidateMailboxMame(mailbox)) return false;
 
             // verify if name already in use
@@ -420,8 +417,7 @@ namespace Neo.SmartContract
         // Index is 1-based
         private static byte[] GetInboxContent(byte[] mailbox, BigInteger index)
         {
-            // unnecessary, only reads data
-            // if (!ValidateMailboxMame(mailbox)) return null;
+            if (!ValidateMailboxMame(mailbox)) return null;
 
             if (index <= 0)
             {
@@ -492,8 +488,7 @@ namespace Neo.SmartContract
         // Get the account balance of another account with address
         public static BigInteger BalanceOf(byte[] address)
         {
-            // unnecessary since this method only reads data
-            // if (!ValidateAddress(address)) return 0;
+            if (!ValidateAddress(address)) return 0;
             return Storage.Get(Storage.CurrentContext, address).AsBigInteger();
         }
 
@@ -561,9 +556,8 @@ namespace Neo.SmartContract
         // Gets the amount of tokens allowed by 'from' address to be used by 'to' address
         public static BigInteger Allowance(byte[] from, byte[] to)
         {
-            // unnecessary since this method only reads data
-            // if (!ValidateAddress(from)) return 0;
-            // if (!ValidateAddress(to)) return 0;
+            if (!ValidateAddress(from)) return 0;
+            if (!ValidateAddress(to)) return 0;
             byte[] allowance_key = from.Concat(to);
             return Storage.Get(Storage.CurrentContext, allowance_key).AsBigInteger();
         }
@@ -589,6 +583,7 @@ namespace Neo.SmartContract
 
         //ICO Settings
         public static readonly byte[] neo_asset_id = { 155, 124, 255, 218, 166, 116, 190, 174, 15, 147, 14, 190, 96, 133, 175, 144, 147, 229, 254, 86, 179, 74, 92, 34, 12, 205, 207, 110, 252, 51, 111, 197 };
+
         public const ulong max_supply = 91136510 * soul_decimals; // total token amount
         public const ulong team_supply = 14500000 * soul_decimals; // company token amount
         public const ulong advisor_supply = 5500000 * soul_decimals; // company token amount
@@ -598,9 +593,8 @@ namespace Neo.SmartContract
         public const ulong token_swap_rate = 273 * soul_decimals; // how many tokens you get per NEO
         public const ulong token_individual_cap = 10 * token_swap_rate; // max tokens than an individual can buy from to the sale
 
-        ///public const uint ico_start_time = 1526947200; // 22 May 00h00 UTC
-        /public const uint ico_start_time = 1516947200; // 22 May 00h00 UTC
-        public const uint ico_war_time = 1526958000; // 22 May 03h00 UTC
+        public const uint ico_start_time = 1526947200; // 22 May 00h00 UTC       
+        public const uint ico_war_time = 1527033600; // 23 May 00h00 UTC
         public const uint ico_end_time = 1527552000; // 29 May 00h00 UTC
 
         [DisplayName("whitelist_add")]
@@ -616,11 +610,10 @@ namespace Neo.SmartContract
         private static readonly byte[] mint_prefix = { (byte)'M', (byte)'I', (byte)'N', (byte)'T' };
 
         // checks if address is on the whitelist
-        public static bool WhitelistCheck(byte[] addressScriptHash)
+        public static bool WhitelistCheck(byte[] address)
         {
-            // unnecessary since this method only reads data
-            // if (!ValidateAddress(addressScriptHash)) return false;
-            var key = whitelist_prefix.Concat(addressScriptHash);
+            if (!ValidateAddress(address)) return false;
+            var key = whitelist_prefix.Concat(address);
             var val = Storage.Get(Storage.CurrentContext, key).AsBigInteger();
             if (val > 0) return true;
             else return false;
