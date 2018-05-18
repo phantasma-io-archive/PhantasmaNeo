@@ -63,7 +63,7 @@ namespace Neo.SmartContract
                 }
 
                 // Check if attached assets are accepted
-                byte[] sender = GetSender();
+                byte[] sender = GetAssetSender();
                 var neo_value = GetContributeValue();
                 var purchase_amount = CheckPurchaseAmount(sender, neo_value, false);
                 return purchase_amount > 0;
@@ -155,6 +155,7 @@ namespace Neo.SmartContract
                 #region NEP5.1 METHODS
                 if (operation == "allowance")
                 {
+                    if (args.Length != 2) return false;
                     byte[] from = (byte[])args[0];
                     byte[] to = (byte[])args[1];
                     return Allowance(from, to);
@@ -162,6 +163,7 @@ namespace Neo.SmartContract
 
                 if (operation == "approve")
                 {
+                    if (args.Length != 3) return false;
                     byte[] from = (byte[])args[0];
                     byte[] to = (byte[])args[1];
                     BigInteger value = (BigInteger)args[2];
@@ -170,10 +172,12 @@ namespace Neo.SmartContract
 
                 if (operation == "transferFrom")
                 {
-                    byte[] from = (byte[])args[0];
-                    byte[] to = (byte[])args[1];
-                    BigInteger value = (BigInteger)args[2];
-                    return TransferFrom(from, to, value);
+                    if (args.Length != 4) return false;
+                    byte[] sender = (byte[])args[0];
+                    byte[] from = (byte[])args[1];
+                    byte[] to = (byte[])args[2];
+                    BigInteger value = (BigInteger)args[3];
+                    return TransferFrom(sender, from, to, value);
                 }
                 #endregion
 
@@ -499,18 +503,18 @@ namespace Neo.SmartContract
         // Transfers tokens from the 'from' address to the 'to' address
         // The Sender must have an allowance from 'From' in order to send it to the 'To'
         // This matches the ERC20 version
-        public static bool TransferFrom(byte[] from, byte[] to, BigInteger value)
+        public static bool TransferFrom(byte[] sender, byte[] from, byte[] to, BigInteger value)
         {
+            if (!Runtime.CheckWitness(sender)) return false;
             if (!ValidateAddress(from)) return false;
             if (!ValidateAddress(to)) return false;
             if (value <= 0) return false;
             if (from == to) return true;
 
-            BigInteger from_value = Storage.Get(Storage.CurrentContext, from).AsBigInteger();
+            BigInteger from_value = BalanceOf(from);
             if (from_value < value) return false;
 
             // allowance of [from] to [sender]
-            byte[] sender = GetSender();
             byte[] allowance_key = from.Concat(sender);
             BigInteger allowance = Storage.Get(Storage.CurrentContext, allowance_key).AsBigInteger();
             if (allowance < value) return false;
@@ -526,7 +530,7 @@ namespace Neo.SmartContract
                 Storage.Put(Storage.CurrentContext, allowance_key, allowance - value);
 
             // Sender sends tokens to 'To'
-            BigInteger to_value = Storage.Get(Storage.CurrentContext, to).AsBigInteger();
+            BigInteger to_value = BalanceOf(to);
             Storage.Put(Storage.CurrentContext, to, to_value + value);
 
             OnTransferred(from, to, value);
@@ -535,20 +539,17 @@ namespace Neo.SmartContract
 
         // Gives approval to the 'to' address to use amount of tokens from the 'from' address
         // This does not guarantee that the funds will be available later to be used by the 'to' address
-        // 'From' is the Tx Sender. This matches the ERC20 version
+        // 'From' is the Tx Sender. Each call overwrites the previous value. This matches the ERC20 version
         public static bool Approve(byte[] from, byte[] to, BigInteger value)
         {
             if (value <= 0) return false;
             if (!Runtime.CheckWitness(from)) return false;
             if (!ValidateAddress(to)) return false;
             if (from == to) return false;
-            BigInteger from_value = Storage.Get(Storage.CurrentContext, from).AsBigInteger();
-            if (from_value < value) return false;
 
+            // overwrite previous value
             byte[] allowance_key = from.Concat(to);
-            BigInteger current_approved_amount = Storage.Get(Storage.CurrentContext, allowance_key).AsBigInteger();
-            BigInteger new_approved_amount = current_approved_amount + value;
-            Storage.Put(Storage.CurrentContext, allowance_key, new_approved_amount);
+            Storage.Put(Storage.CurrentContext, allowance_key, value);
             OnApproved(from, to, value);
             return true;
         }
@@ -621,6 +622,8 @@ namespace Neo.SmartContract
 
         private static bool IsWhitelistingWitness()
         {
+            if (Runtime.CheckWitness(Team_Address))
+                return true;
             if (Runtime.CheckWitness(Whitelist_Address1))
                 return true;
             if (Runtime.CheckWitness(Whitelist_Address2))
@@ -723,7 +726,7 @@ namespace Neo.SmartContract
         // can only be called during the tokenswap period
         public static bool MintTokens()
         {
-            byte[] sender = GetSender();
+            byte[] sender = GetAssetSender();
             // contribute asset is not neo
             if (sender.Length == 0)
             {
@@ -829,7 +832,7 @@ namespace Neo.SmartContract
         }
 
         // check whether asset is neo and get sender script hash
-        private static byte[] GetSender()
+        private static byte[] GetAssetSender()
         {
             Transaction tx = (Transaction)ExecutionEngine.ScriptContainer;
             TransactionOutput[] reference = tx.GetReferences();
