@@ -526,6 +526,7 @@ namespace Neo.SmartContract
             if (!Runtime.CheckWitness(from)) return false;
             if (!ValidateAddress(to)) return false;
             if (from == to) return true;
+
             BigInteger from_value = Storage.Get(Storage.CurrentContext, from).AsBigInteger();
             if (from_value < value) return false;
             if (from_value == value)
@@ -644,8 +645,8 @@ namespace Neo.SmartContract
         public const ulong advisor_monthly_supply =  550000 * soul_decimals; // advisor monthly share
 
         public const ulong token_swap_rate = 273 * soul_decimals; // how many tokens you get per NEO
-        public const ulong token_round1_cap = 10 * token_swap_rate; // max tokens than an individual can buy from to the sale
-        public const ulong token_final_cap = 50 * token_swap_rate; // max tokens than an individual can buy from to the sale
+        public const ulong token_initial_cap = 10 * token_swap_rate; // max tokens than an individual can buy from to the sale
+        public const ulong token_war_cap = 50 * token_swap_rate; // max tokens than an individual can buy from to the sale
 
         public const uint ico_start_time = 1526947200; // 22 May 00h00 UTC       
         public const uint ico_war_time = 1527033600; // 23 May 00h00 UTC
@@ -661,6 +662,7 @@ namespace Neo.SmartContract
         public static event Action<byte[], byte[], BigInteger, BigInteger> OnChainSwap;
 
         private static readonly byte[] whitelist_prefix = { (byte)'W', (byte)'L', (byte)'S', (byte)'T' };
+        private static readonly byte[] bought_prefix = { (byte)'B', (byte)'G', (byte)'T', (byte)'H' };
         private static readonly byte[] mint_prefix = { (byte)'M', (byte)'I', (byte)'N', (byte)'T' };
 
         // checks if address is on the whitelist
@@ -804,6 +806,12 @@ namespace Neo.SmartContract
                 return false;
             }
 
+            // mint tokens to sender
+            CreditTokensToAddress(sender, token_amount);
+            var bought_key = bought_prefix.Concat(sender);
+            var total_bought = Storage.Get(Storage.CurrentContext, bought_key).AsBigInteger();
+            Storage.Put(Storage.CurrentContext, bought_key, total_bought + token_amount);
+
             // adjust total supply
             var current_total_supply = Storage.Get(Storage.CurrentContext, "totalSupply").AsBigInteger();
             Storage.Put(Storage.CurrentContext, "totalSupply", current_total_supply + token_amount);
@@ -850,8 +858,11 @@ namespace Neo.SmartContract
                 tokens_to_give = tokens_available;
             }
 
-            var key = whitelist_prefix.Concat(sender);
-            var whitelist_entry = Storage.Get(Storage.CurrentContext, key).AsBigInteger();
+            var bought_key = bought_prefix.Concat(sender);
+            var total_bought = Storage.Get(Storage.CurrentContext, bought_key).AsBigInteger();
+
+            var whitelist_key = whitelist_prefix.Concat(sender);
+            var whitelist_entry = Storage.Get(Storage.CurrentContext, whitelist_key).AsBigInteger();
             if (whitelist_entry <= 0) // not whitelisted
             {
                 tokens_to_refund += tokens_to_give;
@@ -859,27 +870,25 @@ namespace Neo.SmartContract
             }
             else
             {
-                var balance = Storage.Get(Storage.CurrentContext, sender).AsBigInteger();
-                var new_balance = tokens_to_give + balance;
+                var new_balance = tokens_to_give + total_bought;
 
                 // check individual cap
+                BigInteger individual_cap;
+
                 if (cur_time  < ico_war_time)
                 {
-                    if (new_balance > token_round1_cap)
-                    {
-                        var diff = (new_balance - token_round1_cap);
-                        tokens_to_refund += diff;
-                        tokens_to_give -= diff;
-                    }
+                    individual_cap = token_initial_cap;
                 }
                 else
                 {
-                    if (new_balance > token_final_cap)
-                    {
-                        var diff = (new_balance - token_final_cap);
-                        tokens_to_refund += diff;
-                        tokens_to_give -= diff;
-                    }
+                    individual_cap = token_war_cap;
+                }
+
+                if (new_balance > individual_cap)
+                {
+                    var diff = (new_balance - individual_cap);
+                    tokens_to_refund += diff;
+                    tokens_to_give -= diff;
                 }
             }
 
@@ -889,13 +898,6 @@ namespace Neo.SmartContract
                 {
                     // convert amount to NEO
                     OnRefund(sender, (tokens_to_refund / token_swap_rate) * neo_decimals);
-                }
-
-                if (tokens_to_give > 0)
-                {
-                    // mint tokens to sender
-                    CreditTokensToAddress(sender, tokens_to_give);
-                    Storage.Put(Storage.CurrentContext, "totalSupply", current_supply + tokens_to_give);
                 }
             }
 
