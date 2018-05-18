@@ -149,11 +149,11 @@ namespace Neo.SmartContract
                 #endregion
 
                 #region NEP5 METHODS
-                if (operation == "totalSupply") return TotalSupply();
-                if (operation == "name") return Name();
-                if (operation == "symbol") return Symbol();
+                else if (operation == "totalSupply") return TotalSupply();
+                else if (operation == "name") return Name();
+                else if (operation == "symbol") return Symbol();
 
-                if (operation == "transfer")
+                else if (operation == "transfer")
                 {
                     if (args.Length != 3) return false;
                     byte[] from = (byte[])args[0];
@@ -162,18 +162,18 @@ namespace Neo.SmartContract
                     return Transfer(from, to, value);
                 }
 
-                if (operation == "balanceOf")
+                else if (operation == "balanceOf")
                 {
                     if (args.Length != 1) return 0;
                     byte[] account = (byte[])args[0];
                     return BalanceOf(account);
                 }
 
-                if (operation == "decimals") return Decimals();
+                else if (operation == "decimals") return Decimals();
                 #endregion
 
                 #region NEP5.1 METHODS
-                if (operation == "allowance")
+                else if (operation == "allowance")
                 {
                     if (args.Length != 2) return false;
                     byte[] from = (byte[])args[0];
@@ -181,7 +181,7 @@ namespace Neo.SmartContract
                     return Allowance(from, to);
                 }
 
-                if (operation == "approve")
+                else if (operation == "approve")
                 {
                     if (args.Length != 3) return false;
                     byte[] from = (byte[])args[0];
@@ -190,7 +190,7 @@ namespace Neo.SmartContract
                     return Approve(from, to, value);
                 }
 
-                if (operation == "transferFrom")
+                else if (operation == "transferFrom")
                 {
                     if (args.Length != 4) return false;
                     byte[] sender = (byte[])args[0];
@@ -202,25 +202,25 @@ namespace Neo.SmartContract
                 #endregion
 
                 #region SALE METHODS
-                if (operation == "deploy") return Deploy();
-                if (operation == "mintTokens") return MintTokens();
+                else if (operation == "deploy") return Deploy();
+                else if (operation == "mintTokens") return MintTokens();
 
-                if (operation == "availableTokens") return AvailableTokens();
+                else if (operation == "availableTokens") return AvailableTokens();
 
-                if (operation == "whitelistCheck")
+                else if (operation == "whitelistCheck")
                 {
                     if (args.Length != 1) return false;
                     byte[] address = (byte[])args[0];
                     return WhitelistCheck(address);
                 }
 
-                if (operation == "whitelistAdd")
+                else if (operation == "whitelistAdd")
                 {
                     if (args.Length == 0) return false;
                     return WhitelistAdd(args);
                 }
 
-                if (operation == "whitelistRemove")
+                else if (operation == "whitelistRemove")
                 {
                     if (args.Length == 0) return false;
                     return WhitelistRemove(args);
@@ -229,13 +229,13 @@ namespace Neo.SmartContract
                 #endregion
 
                 #region VESTING
-                if (operation == "unlockTeam")
+                else if (operation == "unlockTeam")
                 {
                     if (args.Length != 0) return false;
                     return UnlockTeam();
                 }
 
-                if (operation == "unlockAdvisor")
+                else if (operation == "unlockAdvisor")
                 {
                     if (args.Length != 0) return false;
                     return UnlockAdvisor();
