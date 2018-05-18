@@ -275,8 +275,8 @@ namespace Neo.SmartContract
         #endregion
 
         #region PROTOCOL API
-        private static readonly byte[] address_prefix = { (byte)'M', (byte)'A', (byte)'D', (byte)'R' };
-        private static readonly byte[] box_name_prefix = { (byte)'M', (byte)'B', (byte)'O', (byte)'X' };
+        private static readonly byte[] box_names_prefix = { (byte)'M', (byte)'A', (byte)'D', (byte)'R' };
+        private static readonly byte[] box_owners_prefix = { (byte)'M', (byte)'B', (byte)'O', (byte)'X' };
 
         private static readonly byte[] inbox_size_prefix = { (byte)'M', (byte)'S', (byte)'I', (byte)'Z' };
         private static readonly byte[] inbox_content_prefix = { (byte)'M', (byte)'S', (byte)'I', (byte)'C' };
@@ -287,7 +287,7 @@ namespace Neo.SmartContract
         private static byte[] GetInboxFromAddress(byte[] address)
         {
             if (!ValidateAddress(address)) return null;
-            var key = address_prefix.Concat(address);
+            var key = box_names_prefix.Concat(address);
             byte[] value = Storage.Get(Storage.CurrentContext, key);
             return value;
         }
@@ -295,7 +295,7 @@ namespace Neo.SmartContract
         private static byte[] GetAddressFromInbox(byte[] mailbox)
         {
             if (!ValidateMailboxMame(mailbox)) return null;
-            var key = box_name_prefix.Concat(mailbox);
+            var key = box_owners_prefix.Concat(mailbox);
             byte[] value = Storage.Get(Storage.CurrentContext, key);
             return value;
         }
@@ -306,12 +306,12 @@ namespace Neo.SmartContract
             if (!ValidateMailboxMame(mailbox)) return false;
 
             // verify if name already in use
-            var inbox_key = box_name_prefix.Concat(mailbox);
+            var inbox_key = box_owners_prefix.Concat(mailbox);
             byte[] inbox_value = Storage.Get(Storage.CurrentContext, inbox_key);
             if (inbox_value != null) return false;
 
             // verify if address already has mailbox. must unregister first
-            var address_key = address_prefix.Concat(owner);
+            var address_key = box_names_prefix.Concat(owner);
             byte[] address_value = Storage.Get(Storage.CurrentContext, address_key);
             if (address_value != null) return false;
 
@@ -327,12 +327,12 @@ namespace Neo.SmartContract
             if (!Runtime.CheckWitness(owner)) return false;
 
             // delete reverse mapping address => name
-            var key = address_prefix.Concat(owner);
+            var key = box_names_prefix.Concat(owner);
             var mailbox = Storage.Get(Storage.CurrentContext, key);
             Storage.Delete(Storage.CurrentContext, key);
 
             // delete mapping name => address
-            key = box_name_prefix.Concat(mailbox);
+            key = box_owners_prefix.Concat(mailbox);
             Storage.Delete(Storage.CurrentContext, key);
 
             // delete inbox size
@@ -367,7 +367,7 @@ namespace Neo.SmartContract
             if (!Runtime.CheckWitness(owner)) return false;
             if (!ValidateMailboxMame(to_mailbox)) return false;
 
-            var from_box_key = address_prefix.Concat(owner);
+            var from_box_key = box_names_prefix.Concat(owner);
             var from_mailbox = Storage.Get(Storage.CurrentContext, from_box_key);
             // verify if name exists
             if (from_mailbox == null) return false;
@@ -384,7 +384,7 @@ namespace Neo.SmartContract
             if (!Runtime.CheckWitness(owner)) return false;
             if (index <= 0) return false;
 
-            var inbox_key = address_prefix.Concat(owner);
+            var inbox_key = box_names_prefix.Concat(owner);
             var mailbox = Storage.Get(Storage.CurrentContext, inbox_key);
             // verify if name exists
             if (mailbox == null) return false;
