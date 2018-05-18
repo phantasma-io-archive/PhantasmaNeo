@@ -202,6 +202,21 @@ namespace Neo.SmartContract
 
                 #endregion
 
+                #region VESTING
+                if (operation == "unlockTeam")
+                {
+                    if (args.Length != 0) return false;
+                    return UnlockTeam();
+                }
+
+                if (operation == "unlockAdvisor")
+                {
+                    if (args.Length != 0) return false;
+                    return UnlockAdvisor();
+                }
+
+                #endregion
+
                 #region CROSSCHAIN METHODS
                 if (operation == "chainSwap")
                 {
@@ -557,9 +572,10 @@ namespace Neo.SmartContract
 
         #region TOKEN SALE
 
-        public static readonly byte[] Team_Address = "AX7hwi7MAXMquDFQ2NSbWqyDWnjS2t7MNJ".ToScriptHash();
-        public static readonly byte[] Platform_Address = "ALD9pd6nsWKZbB64Uni3JtDAEQ6ejSjdtJ".ToScriptHash();        
-        public static readonly byte[] Presale_Address = "AShRtCXAfzXtkFKgnjjeFpyNnGHjP6hzJ5".ToScriptHash();
+        public static readonly byte[] Team_Address = "AGUNSWYyZDVQpzL6YbuSYc5qqbG7fDcMuZ".ToScriptHash();
+        public static readonly byte[] Advisor_Address = "AKvFhNqJUkGzHCiwrEAfSEG3fP1fNtji1F".ToScriptHash();
+        public static readonly byte[] Platform_Address = "AQFQmVQi9VReLhym1tF3UfPk4EG3VKbAwN".ToScriptHash();        
+        public static readonly byte[] Presale_Address = "ARWHJefSbhayC2gurKkpjMHm5ReaJZLLJ3".ToScriptHash();
 
         public static readonly byte[] Whitelist_Address1 = "AU3HnDtGjiH4WGPSFAGBTDXPCxZgoCnoJJ".ToScriptHash();
         public static readonly byte[] Whitelist_Address2 = "ATMSoKwfupymhmej3iLA12HabyuHPNGwDx".ToScriptHash();
@@ -575,13 +591,15 @@ namespace Neo.SmartContract
         public static readonly byte[] neo_asset_id = { 155, 124, 255, 218, 166, 116, 190, 174, 15, 147, 14, 190, 96, 133, 175, 144, 147, 229, 254, 86, 179, 74, 92, 34, 12, 205, 207, 110, 252, 51, 111, 197 };
         public const ulong max_supply = 91136510 * soul_decimals; // total token amount
         public const ulong team_supply = 14500000 * soul_decimals; // company token amount
+        public const ulong advisor_supply = 5500000 * soul_decimals; // company token amount
         public const ulong platform_supply = 15000000 * soul_decimals; // company token amount
         public const ulong presale_supply = 43503435 * soul_decimals; // employee token amount
 
         public const ulong token_swap_rate = 273 * soul_decimals; // how many tokens you get per NEO
         public const ulong token_individual_cap = 10 * token_swap_rate; // max tokens than an individual can buy from to the sale
 
-        public const uint ico_start_time = 1526947200; // 22 May 00h00 UTC
+        ///public const uint ico_start_time = 1526947200; // 22 May 00h00 UTC
+        /public const uint ico_start_time = 1516947200; // 22 May 00h00 UTC
         public const uint ico_war_time = 1526958000; // 22 May 03h00 UTC
         public const uint ico_end_time = 1527552000; // 29 May 00h00 UTC
 
@@ -693,16 +711,13 @@ namespace Neo.SmartContract
 
             var initialSupply = team_supply + presale_supply + platform_supply;
 
-            OnMint(Team_Address, team_supply);
-            Storage.Put(Storage.CurrentContext, Team_Address, team_supply);
+            // team supply is locked, storage stays at zero here
 
-            OnMint(Team_Address, presale_supply);
+            OnMint(Presale_Address, presale_supply);
             Storage.Put(Storage.CurrentContext, Presale_Address, presale_supply);
 
-            OnMint(Team_Address, platform_supply);
+            OnMint(Platform_Address, platform_supply);
             Storage.Put(Storage.CurrentContext, Platform_Address, platform_supply);
-
-            Storage.Put(Storage.CurrentContext, "lastDistribution", ico_start_time);
 
             Storage.Put(Storage.CurrentContext, "totalSupply", initialSupply);
 
@@ -865,9 +880,110 @@ namespace Neo.SmartContract
         {
             var balance = Storage.Get(Storage.CurrentContext, addressScriptHash).AsBigInteger();
             Storage.Put(Storage.CurrentContext, addressScriptHash, amount + balance);
-            OnTransferred(null, addressScriptHash, amount);
+            OnMint(addressScriptHash, amount);
         }
 
         #endregion
+
+        #region VESTING
+        public static bool UnlockTeam()
+        {
+            if (!Runtime.CheckWitness(Team_Address))
+            {
+                return false;
+            }
+
+            var key = "team_lock";
+            var lockStage = Storage.Get(Storage.CurrentContext, key).AsBigInteger();
+
+            uint unlockTime;
+            if (lockStage == 0) { unlockTime = 1550793600; }
+            else
+            if (lockStage == 1) { unlockTime = 1558483200; }
+            else
+            if (lockStage == 2) { unlockTime = 1566432000; }
+            else
+            if (lockStage == 3) { unlockTime = 1574380800; }
+            else
+            if (lockStage == 4) { unlockTime = 1582329600; }
+            else
+            if (lockStage == 5) { unlockTime = 1590105600; }
+            else
+            if (lockStage == 6) { unlockTime = 1598054400; }
+            else
+            if (lockStage == 7) { unlockTime = 1606003200; }
+            else
+            if (lockStage == 8) { unlockTime = 1613952000; }
+            else
+            if (lockStage == 9) { unlockTime = 1621641600; }
+            else
+            {
+                return false;
+            }
+
+            if (Runtime.Time < unlockTime)
+            {
+                return false;
+            }
+
+            lockStage = lockStage + 1;
+            Storage.Put(Storage.CurrentContext, key, lockStage);
+
+            var amount = 1450000 * soul_decimals;
+
+            CreditTokensToAddress(Team_Address, amount);
+            return true;
+        }
+
+        public static bool UnlockAdvisor()
+        {
+            if (!Runtime.CheckWitness(Advisor_Address))
+            {
+                return false;
+            }
+
+            var key = "advisor_lock";
+            var lockStage = Storage.Get(Storage.CurrentContext, key).AsBigInteger();
+
+            uint unlockTime;
+            if (lockStage == 0) { unlockTime = 1534896000; }
+            else
+            if (lockStage == 1) { unlockTime = 1537574400; }
+            else
+            if (lockStage == 2) { unlockTime = 1540166400; }
+            else
+            if (lockStage == 3) { unlockTime = 1542844800; }
+            else
+            if (lockStage == 4) { unlockTime = 1608595200; }
+            else
+            if (lockStage == 5) { unlockTime = 1548115200; }
+            else
+            if (lockStage == 6) { unlockTime = 1550793600; }
+            else
+            if (lockStage == 7) { unlockTime = 1553212800; }
+            else
+            if (lockStage == 8) { unlockTime = 1555891200; }
+            else
+            if (lockStage == 9) { unlockTime = 1558483200; }
+            else
+            {
+                return false;
+            }
+
+            if (Runtime.Time < unlockTime)
+            {
+                return false;
+            }
+
+            lockStage = lockStage + 1;
+            Storage.Put(Storage.CurrentContext, key, lockStage);
+
+            var amount = 550000 * soul_decimals;
+
+            CreditTokensToAddress(Advisor_Address, amount);
+            return true;
+        }
+        #endregion
+
     }
 }
