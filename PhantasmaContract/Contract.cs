@@ -961,11 +961,22 @@ namespace Neo.SmartContract
         private static BigInteger GetContributeValue()
         {
             Transaction tx = (Transaction)ExecutionEngine.ScriptContainer;
+            var receiver = GetReceiver();
+
+            TransactionOutput[] inputs = tx.GetReferences();
+            foreach (var input in inputs)
+            {
+                if (input.ScriptHash == receiver)
+                {
+                    return 0;
+                }
+            }
+
             TransactionOutput[] outputs = tx.GetOutputs();
             BigInteger value = 0;
-            var receiver = GetReceiver();
+
             // get the total amount of Neo
-            foreach (TransactionOutput output in outputs)
+            foreach (var output in outputs)
             {
                 if (output.ScriptHash == receiver && output.AssetId == neo_asset_id)
                 {
