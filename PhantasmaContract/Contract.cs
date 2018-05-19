@@ -645,8 +645,8 @@ namespace Neo.SmartContract
         public const ulong advisor_monthly_supply =  550000 * soul_decimals; // advisor monthly share
 
         public const ulong token_swap_rate = 273 * soul_decimals; // how many tokens you get per NEO
-        public const ulong token_initial_cap = 10 * token_swap_rate; // max tokens than an individual can buy from to the sale
-        public const ulong token_war_cap = 50 * token_swap_rate; // max tokens than an individual can buy from to the sale
+        public const ulong token_initial_cap = 10 * token_swap_rate; // max tokens than an individual can buy from to the sale in the first round, guaranteed
+        public const ulong token_war_cap = 60 * token_swap_rate; // max tokens than an individual can buy from to the sale in the second round, not guaranteed
 
         public const uint ico_start_time = 1526947200; // 22 May 00h00 UTC       
         public const uint ico_war_time = 1527033600; // 23 May 00h00 UTC
