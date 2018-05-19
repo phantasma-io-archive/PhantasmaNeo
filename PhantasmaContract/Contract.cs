@@ -888,7 +888,7 @@ namespace Neo.SmartContract
             // check global hard cap
             if (tokens_to_give > tokens_available)
             {
-                tokens_to_refund += (tokens_to_give - tokens_available);
+                tokens_to_refund = (tokens_to_give - tokens_available);
                 tokens_to_give = tokens_available;
             }
 
