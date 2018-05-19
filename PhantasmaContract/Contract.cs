@@ -106,19 +106,17 @@ namespace Neo.SmartContract
                 }
                 else if (operation == "removeInboxMessage")
                 {
-                    if (args.Length != 3) return false;
+                    if (args.Length != 2) return false;
                     byte[] owner = (byte[])args[0];
                     BigInteger index = (BigInteger)args[1];
-                    byte[] hash = (byte[])args[2];
-                    return RemoveInboxMessage(owner, index, hash);
+                    return RemoveInboxMessage(owner, index);
                 }
                 else if (operation == "removeOutboxMessage")
                 {
                     if (args.Length != 3) return false;
                     byte[] owner = (byte[])args[0];
                     BigInteger index = (BigInteger)args[1];
-                    byte[] hash = (byte[])args[2];
-                    return RemoveOutboxMessage(owner, index, hash);
+                    return RemoveOutboxMessage(owner, index);
                 }
                 else if (operation == "getInboxCount")
                 {
@@ -417,7 +415,7 @@ namespace Neo.SmartContract
 
         // Delete received message from message box. By Index, with an optional content hash check
         // Index is 1-based
-        private static bool RemoveMessage(byte[] owner, BigInteger index, byte[] hash, byte[] box_count_prefix, byte[] box_content_prefix)
+        private static bool RemoveMessage(byte[] owner, BigInteger index, byte[] box_count_prefix, byte[] box_content_prefix)
         {
             if (index <= 0) return false;
             if (!Runtime.CheckWitness(owner)) return false;
@@ -429,36 +427,35 @@ namespace Neo.SmartContract
 
             // get mailbox current size
             var box_size_key = box_count_prefix.Concat(mailbox);
-            var mailcount = Storage.Get(Storage.CurrentContext, box_size_key).AsBigInteger();
+            var temp = Storage.Get(Storage.CurrentContext, box_size_key);
+            var mailcount = temp.AsBigInteger();
             if (index > mailcount) return false;
 
+            // copy value in last box
             var basekey = box_content_prefix.Concat(mailbox);
-            var lastkey = basekey.Concat((mailcount - 1).AsByteArray());
-            var indexkey = basekey.Concat(index.AsByteArray());
+            var lastkey = basekey.Concat(temp);
+            var lastval = Storage.Get(Storage.CurrentContext, lastkey);
+            Storage.Delete(Storage.CurrentContext, lastkey);
 
-            if (hash.AsBigInteger() != 0)
-            {
-                // check if this is the right message to delete
-                var indexval = Storage.Get(Storage.CurrentContext, lastkey);
-                if (indexval != hash) return false;
-            }
+            // decrease mailbox size
+            mailcount = mailcount - 1;
+            Storage.Put(Storage.CurrentContext, box_size_key, mailcount);
 
             // move last value to the removed index
-            var lastval = Storage.Get(Storage.CurrentContext, lastkey);
+            var indexkey = basekey.Concat(index.AsByteArray());
             Storage.Put(Storage.CurrentContext, indexkey, lastval);
-            // decrease mailbox size
-            Storage.Put(Storage.CurrentContext, box_size_key, mailcount - 1);
+
             return true;
         }
 
-        private static bool RemoveInboxMessage(byte[] owner, BigInteger index, byte[] hash)
+        private static bool RemoveInboxMessage(byte[] owner, BigInteger index)
         {
-            return RemoveMessage(owner, index, hash, inbox_size_prefix, inbox_content_prefix);
+            return RemoveMessage(owner, index, inbox_size_prefix, inbox_content_prefix);
         }
 
-        private static bool RemoveOutboxMessage(byte[] owner, BigInteger index, byte[] hash)
+        private static bool RemoveOutboxMessage(byte[] owner, BigInteger index)
         {
-            return RemoveMessage(owner, index, hash, outbox_size_prefix, outbox_content_prefix);
+            return RemoveMessage(owner, index, outbox_size_prefix, outbox_content_prefix);
         }
 
         // we assume the mailbox name is never created internally,
