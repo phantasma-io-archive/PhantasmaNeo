@@ -38,7 +38,7 @@ namespace Neo.SmartContract
 
         private static bool ValidateMailboxMame(byte[] mailbox_name)
         {
-            if (mailbox_name.Length <=4 || mailbox_name.Length >= 20)
+            if (mailbox_name.Length <= 4 || mailbox_name.Length >= 20)
                 return false;
             if (mailbox_name.AsBigInteger() == 0)
                 return false;
@@ -275,7 +275,7 @@ namespace Neo.SmartContract
             if (!Runtime.CheckWitness(neo_address))
                 return false;
 
-            if (phantasma_address == null || phantasma_address.Length<20)
+            if (phantasma_address == null || phantasma_address.Length < 20)
                 return false;
 
            if (amount <= 0)
@@ -648,7 +648,7 @@ namespace Neo.SmartContract
 
         public static readonly byte[] Team_Address = "AGUNSWYyZDVQpzL6YbuSYc5qqbG7fDcMuZ".ToScriptHash();
         public static readonly byte[] Advisor_Address = "AKvFhNqJUkGzHCiwrEAfSEG3fP1fNtji1F".ToScriptHash();
-        public static readonly byte[] Platform_Address = "AQFQmVQi9VReLhym1tF3UfPk4EG3VKbAwN".ToScriptHash();        
+        public static readonly byte[] Platform_Address = "AQFQmVQi9VReLhym1tF3UfPk4EG3VKbAwN".ToScriptHash();
         public static readonly byte[] Presale_Address = "ARWHJefSbhayC2gurKkpjMHm5ReaJZLLJ3".ToScriptHash();
 
         public static readonly byte[] Whitelist_Address1 = "AYQ3FMw4oEjqEaHp4n6ZxJTpBuyp5FTCge".ToScriptHash();
@@ -664,14 +664,14 @@ namespace Neo.SmartContract
         //ICO Settings
         public static readonly byte[] neo_asset_id = { 155, 124, 255, 218, 166, 116, 190, 174, 15, 147, 14, 190, 96, 133, 175, 144, 147, 229, 254, 86, 179, 74, 92, 34, 12, 205, 207, 110, 252, 51, 111, 197 };
 
-        public const ulong max_supply      = 91136510 * soul_decimals; // total token amount
-        public const ulong team_supply     = 14500000 * soul_decimals; // team token amount
-        public const ulong advisor_supply  =  5500000 * soul_decimals; // advisor token amount
+        public const ulong max_supply = 91136510 * soul_decimals; // total token amount
+        public const ulong team_supply = 14500000 * soul_decimals; // team token amount
+        public const ulong advisor_supply = 5500000 * soul_decimals; // advisor token amount
         public const ulong platform_supply = 15000000 * soul_decimals; // company token amount
-        public const ulong presale_supply  = 43503435 * soul_decimals; // presale token amount
+        public const ulong presale_supply = 43503435 * soul_decimals; // presale token amount
 
-        public const ulong team_monthly_supply    = 1450000 * soul_decimals; // team monthly share
-        public const ulong advisor_monthly_supply =  550000 * soul_decimals; // advisor monthly share
+        public const ulong team_monthly_supply = 1450000 * soul_decimals; // team monthly share
+        public const ulong advisor_monthly_supply = 550000 * soul_decimals; // advisor monthly share
 
         public const ulong token_swap_rate = 273 * soul_decimals; // how many tokens you get per NEO
         public const ulong token_initial_cap = 10 * token_swap_rate; // max tokens than an individual can buy from to the sale in the first round, guaranteed
@@ -789,7 +789,7 @@ namespace Neo.SmartContract
                 return false;
             }
 
-            var initialSupply = team_supply +  advisor_supply + presale_supply + platform_supply;
+            var initialSupply = team_supply + advisor_supply + presale_supply + platform_supply;
 
             // team and advisor supply is locked, storage stays at zero here
 
@@ -904,7 +904,7 @@ namespace Neo.SmartContract
                 // check individual cap
                 BigInteger individual_cap;
 
-                if (cur_time  < ico_war_time)
+                if (cur_time < ico_war_time)
                 {
                     individual_cap = token_initial_cap;
                 }
@@ -924,7 +924,7 @@ namespace Neo.SmartContract
             if (apply)
             {
                 // here we do partial refunds only, full refunds are done in verification trigger!
-                if (tokens_to_refund > 0 && tokens_to_give > 0) 
+                if (tokens_to_refund > 0 && tokens_to_give > 0)
                 {
                     // convert amount to NEO
                     OnRefund(sender, (tokens_to_refund / token_swap_rate) * neo_decimals);
