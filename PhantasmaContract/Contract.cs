@@ -480,7 +480,7 @@ namespace Neo.SmartContract
             return value.AsBigInteger();
         }
 
-        private static BigInteger GetOutboxCount(byte[] mailbox)
+        public static BigInteger GetOutboxCount(byte[] mailbox)
         {
             if (!ValidateMailboxMame(mailbox)) return 0;
             var key = outbox_size_prefix.Concat(mailbox);
