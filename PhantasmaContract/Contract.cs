@@ -894,7 +894,8 @@ namespace Neo.SmartContract
 
             if (apply)
             {
-                if (tokens_to_refund > 0)
+                // here we do partial refunds only, full refunds are done in verification trigger!
+                if (tokens_to_refund > 0 && tokens_to_give > 0) 
                 {
                     // convert amount to NEO
                     OnRefund(sender, (tokens_to_refund / token_swap_rate) * neo_decimals);
