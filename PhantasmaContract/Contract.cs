@@ -525,10 +525,11 @@ namespace Neo.SmartContract
             if (value <= 0) return false;
             if (!Runtime.CheckWitness(from)) return false;
             if (!ValidateAddress(to)) return false;
-            if (from == to) return true;
 
             BigInteger from_value = Storage.Get(Storage.CurrentContext, from).AsBigInteger();
             if (from_value < value) return false;
+            if (from == to) return true;
+
             if (from_value == value)
                 Storage.Delete(Storage.CurrentContext, from);
             else
@@ -559,10 +560,10 @@ namespace Neo.SmartContract
             if (!ValidateAddress(from)) return false;
             if (!ValidateAddress(to)) return false;
             if (value <= 0) return false;
-            if (from == to) return true;
 
             BigInteger from_value = BalanceOf(from);
             if (from_value < value) return false;
+            if (from == to) return true;
 
             // allowance of [from] to [sender]
             byte[] allowance_key = from.Concat(sender);
