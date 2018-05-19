@@ -416,11 +416,14 @@ namespace Neo.SmartContract
         public static bool SendMessage(byte[] owner, byte[] to_mailbox, byte[] hash)
         {
             if (!Runtime.CheckWitness(owner)) return false;
-            if (!ValidateMailboxMame(to_mailbox)) return false;
+
+            // verify if target box exists
+            var to_owner = GetAddressFromMailbox(to_mailbox);
+            if (to_owner == null) return false;
 
             var from_box_key = box_names_prefix.Concat(owner);
             var from_mailbox = Storage.Get(Storage.CurrentContext, from_box_key);
-            // verify if name exists
+            // verify if source box exists
             if (from_mailbox == null) return false;
 
             AppendToBox(inbox_size_prefix, inbox_content_prefix, to_mailbox, hash);
