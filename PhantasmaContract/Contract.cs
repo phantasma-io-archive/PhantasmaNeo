@@ -257,7 +257,7 @@ namespace Neo.SmartContract
         }
 
         #region CROSSCHAIN API
-        private static bool ExecuteChainSwap(byte[] neo_address, byte[] phantasma_address, BigInteger amount)
+        public static bool ExecuteChainSwap(byte[] neo_address, byte[] phantasma_address, BigInteger amount)
         {
             if (!Runtime.CheckWitness(neo_address))
                 return false;
@@ -302,7 +302,7 @@ namespace Neo.SmartContract
         private static readonly byte[] outbox_size_prefix = { (byte)'M', (byte)'S', (byte)'O', (byte)'Z' };
         private static readonly byte[] outbox_content_prefix = { (byte)'M', (byte)'S', (byte)'O', (byte)'C' };
 
-        private static byte[] GetMailboxFromAddress(byte[] address)
+        public static byte[] GetMailboxFromAddress(byte[] address)
         {
             if (!ValidateAddress(address)) return null;
             var key = box_names_prefix.Concat(address);
@@ -310,7 +310,7 @@ namespace Neo.SmartContract
             return value;
         }
 
-        private static byte[] GetAddressFromMailbox(byte[] mailbox)
+        public static byte[] GetAddressFromMailbox(byte[] mailbox)
         {
             if (!ValidateMailboxMame(mailbox)) return null;
             var key = box_owners_prefix.Concat(mailbox);
@@ -318,7 +318,7 @@ namespace Neo.SmartContract
             return value;
         }
 
-        private static bool RegisterMailbox(byte[] owner, byte[] mailbox)
+        public static bool RegisterMailbox(byte[] owner, byte[] mailbox)
         {
             if (!Runtime.CheckWitness(owner)) return false;
             if (!ValidateMailboxMame(mailbox)) return false;
@@ -360,7 +360,7 @@ namespace Neo.SmartContract
             Storage.Put(Storage.CurrentContext, box_count_key, message_count);
         }
 
-        private static bool UnregisterMailbox(byte[] owner)
+        public static bool UnregisterMailbox(byte[] owner)
         {
             if (!Runtime.CheckWitness(owner)) return false;
 
@@ -448,21 +448,21 @@ namespace Neo.SmartContract
             return true;
         }
 
-        private static bool RemoveInboxMessage(byte[] owner, BigInteger index)
+        public static bool RemoveInboxMessage(byte[] owner, BigInteger index)
         {
             return RemoveMessage(owner, index, inbox_size_prefix, inbox_content_prefix);
         }
 
-        private static bool RemoveOutboxMessage(byte[] owner, BigInteger index)
+        public static bool RemoveOutboxMessage(byte[] owner, BigInteger index)
         {
             return RemoveMessage(owner, index, outbox_size_prefix, outbox_content_prefix);
         }
 
         // we assume the mailbox name is never created internally,
         // it must come as an outside input and be validated there
-        // if (!ValidateMailboxMame(mailbox)) return 0;
-        private static BigInteger GetInboxCount(byte[] mailbox)
+        public static BigInteger GetInboxCount(byte[] mailbox)
         {
+            if (!ValidateMailboxMame(mailbox)) return 0;
             var key = inbox_size_prefix.Concat(mailbox);
             var value = Storage.Get(Storage.CurrentContext, key);
             return value.AsBigInteger();
@@ -470,13 +470,14 @@ namespace Neo.SmartContract
 
         private static BigInteger GetOutboxCount(byte[] mailbox)
         {
+            if (!ValidateMailboxMame(mailbox)) return 0;
             var key = outbox_size_prefix.Concat(mailbox);
             var value = Storage.Get(Storage.CurrentContext, key);
             return value.AsBigInteger();
         }
 
         // Index is 1-based
-        private static byte[] GetInboxContent(byte[] mailbox, BigInteger index)
+        public static byte[] GetInboxContent(byte[] mailbox, BigInteger index)
         {
             if (!ValidateMailboxMame(mailbox)) return null;
             if (index <= 0) return null;
@@ -489,7 +490,7 @@ namespace Neo.SmartContract
         }
 
         // Index is 1-based
-        private static byte[] GetOutboxContent(byte[] mailbox, BigInteger index)
+        public static byte[] GetOutboxContent(byte[] mailbox, BigInteger index)
         {
             if (!ValidateMailboxMame(mailbox)) return null;
             if (index <= 0) return null;
