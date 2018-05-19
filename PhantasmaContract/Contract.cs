@@ -612,6 +612,9 @@ namespace Neo.SmartContract
             if (!ValidateAddress(to)) return false;
             if (from == to) return false;
 
+            BigInteger from_value = BalanceOf(from);
+            if (from_value < value) return false;
+
             // overwrite previous value
             byte[] allowance_key = from.Concat(to);
             Storage.Put(Storage.CurrentContext, allowance_key, value);
