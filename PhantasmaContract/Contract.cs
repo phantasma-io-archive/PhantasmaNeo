@@ -866,7 +866,7 @@ namespace Neo.SmartContract
         private static BigInteger CheckPurchaseAmount(byte[] sender, BigInteger neo_value, bool apply)
         {
             BigInteger tokens_to_refund = 0;
-            BigInteger tokens_to_give = 0;
+            BigInteger tokens_to_give;
 
             var cur_time = Runtime.Time;
             if (cur_time >= ico_end_time || cur_time < ico_start_time)
@@ -875,7 +875,7 @@ namespace Neo.SmartContract
                 if (apply == false)
                     return 0;
 
-                tokens_to_refund = tokens_to_give;
+                tokens_to_give = 0;
             }
             else
             {
