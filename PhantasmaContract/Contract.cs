@@ -49,7 +49,8 @@ namespace Neo.SmartContract
                 var c = mailbox_name[index];
                 index++;
 
-                if (c >= 95 && c <= 122) continue; // only lowercase and underscore allowed
+                if (c >= 97 && c <= 122) continue; // lowercase allowed
+                if (c == 95) continue; // underscore allowed
 
                 return false;
             }
