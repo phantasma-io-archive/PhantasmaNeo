@@ -376,7 +376,7 @@ namespace Neo.SmartContract
             Storage.Delete(Storage.CurrentContext, key);
 
             DeleteBox(inbox_size_prefix, inbox_content_prefix, mailbox);
-            DeleteBox(inbox_size_prefix, inbox_content_prefix, mailbox);
+            DeleteBox(outbox_size_prefix, outbox_content_prefix, mailbox);
 
             return true;
         }
