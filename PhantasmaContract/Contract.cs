@@ -38,7 +38,7 @@ namespace Neo.SmartContract
 
         private static bool ValidateMailboxMame(byte[] mailbox_name)
         {
-            if (mailbox_name.Length < 5 || mailbox_name.Length > 20)
+            if (mailbox_name.Length <=4 || mailbox_name.Length >= 20)
                 return false;
             if (mailbox_name.AsBigInteger() == 0)
                 return false;
