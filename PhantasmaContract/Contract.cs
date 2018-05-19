@@ -42,6 +42,18 @@ namespace Neo.SmartContract
                 return false;
             if (mailbox_name.AsBigInteger() == 0)
                 return false;
+
+            int index = 0;
+            while (index < mailbox_name.Length)
+            {
+                var c = mailbox_name[index];
+                index++;
+
+                if (c >= 95 && c <= 122) continue; // only lowercase and underscore allowed
+
+                return false;
+            }
+
             return true;
         }
 
