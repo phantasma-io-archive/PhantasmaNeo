@@ -369,6 +369,8 @@ namespace Neo.SmartContract
 
                 // delete mail content 
                 Storage.Delete(Storage.CurrentContext, box_content_key);
+
+                message_count = message_count - 1;
             }
 
             Storage.Put(Storage.CurrentContext, box_count_key, message_count);
