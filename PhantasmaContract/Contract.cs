@@ -342,6 +342,26 @@ namespace Neo.SmartContract
             return true;
         }
 
+        // this deletes a box and all messages within it
+        private static void DeleteBox(byte[] box_count_prefix, byte[] box_content_prefix, byte[] box_name)
+        {
+            // get mailbox current size
+            var box_count_key = box_count_prefix.Concat(box_name);
+            var message_count = Storage.Get(Storage.CurrentContext, box_count_key).AsBigInteger();
+
+            while (message_count > 0)
+            {
+                var box_content_key = box_content_prefix.Concat(box_name);
+                var value = message_count.AsByteArray();
+                box_content_key = box_content_key.Concat(value);
+
+                // delete mail content 
+                Storage.Delete(Storage.CurrentContext, box_content_key);
+            }
+
+            Storage.Put(Storage.CurrentContext, box_count_key, message_count);
+        }
+
         private static bool UnregisterMailbox(byte[] owner)
         {
             if (!Runtime.CheckWitness(owner)) return false;
@@ -355,15 +375,9 @@ namespace Neo.SmartContract
             key = box_owners_prefix.Concat(mailbox);
             Storage.Delete(Storage.CurrentContext, key);
 
-            // delete inbox size
-            key = inbox_size_prefix.Concat(mailbox);
-            Storage.Delete(Storage.CurrentContext, key);
+            DeleteBox(inbox_size_prefix, inbox_content_prefix, mailbox);
+            DeleteBox(inbox_size_prefix, inbox_content_prefix, mailbox);
 
-            // delete outbox size
-            key = outbox_size_prefix.Concat(mailbox);
-            Storage.Delete(Storage.CurrentContext, key);
-
-            // Should we also delete all the messages?
             return true;
         }
 
