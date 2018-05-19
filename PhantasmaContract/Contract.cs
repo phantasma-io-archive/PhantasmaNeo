@@ -407,7 +407,6 @@ namespace Neo.SmartContract
             Storage.Put(Storage.CurrentContext, box_count_key, value);
 
             var box_content_key = box_content_prefix.Concat(box_name);
-            value = message_count.AsByteArray();
             box_content_key = box_content_key.Concat(value);
 
             // save mail content / hash
