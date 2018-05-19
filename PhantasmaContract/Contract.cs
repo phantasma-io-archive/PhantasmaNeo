@@ -51,6 +51,7 @@ namespace Neo.SmartContract
 
                 if (c >= 97 && c <= 122) continue; // lowercase allowed
                 if (c == 95) continue; // underscore allowed
+                if (c >= 48 && c <= 57) continue; // numbers allowed
 
                 return false;
             }
