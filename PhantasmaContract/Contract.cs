@@ -622,7 +622,7 @@ namespace Neo.SmartContract
         public static readonly byte[] Platform_Address = "AQFQmVQi9VReLhym1tF3UfPk4EG3VKbAwN".ToScriptHash();        
         public static readonly byte[] Presale_Address = "ARWHJefSbhayC2gurKkpjMHm5ReaJZLLJ3".ToScriptHash();
 
-        public static readonly byte[] Whitelist_Address1 = "AU3HnDtGjiH4WGPSFAGBTDXPCxZgoCnoJJ".ToScriptHash();
+        public static readonly byte[] Whitelist_Address1 = "AYQ3FMw4oEjqEaHp4n6ZxJTpBuyp5FTCge".ToScriptHash();
         public static readonly byte[] Whitelist_Address2 = "ATMSoKwfupymhmej3iLA12HabyuHPNGwDx".ToScriptHash();
         public static readonly byte[] Whitelist_Address3 = "AQgTdM2NAQvbRpCcBcXJWZnfTdESHaFFdc".ToScriptHash();
         public static readonly byte[] Whitelist_Address4 = "ALokKyd98P6EQiqoV8CdyQbs3sgAteUyX8".ToScriptHash();
@@ -998,7 +998,7 @@ namespace Neo.SmartContract
             lockStage = lockStage + 1;
             Storage.Put(Storage.CurrentContext, key, lockStage);
 
-            var amount = team_monthly_supply ;
+            var amount = team_monthly_supply;
 
             CreditTokensToAddress(Team_Address, amount);
             return true;
@@ -1047,7 +1047,7 @@ namespace Neo.SmartContract
             lockStage = lockStage + 1;
             Storage.Put(Storage.CurrentContext, key, lockStage);
 
-            var amount = advisor_monthly_supply ;
+            var amount = advisor_monthly_supply;
 
             CreditTokensToAddress(Advisor_Address, amount);
             return true;
