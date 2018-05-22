@@ -346,12 +346,12 @@ namespace Neo.SmartContract
             // verify if name already in use
             var box_owner_key = box_owners_prefix.Concat(mailbox);
             byte[] box_owner = Storage.Get(Storage.CurrentContext, box_owner_key);
-            if (box_owner != null) return false;
+            if (box_owner.AsBigInteger() != 0) return false;
 
             // verify if address already has mailbox. must unregister first
             var box_name_key = box_names_prefix.Concat(owner);
             byte[] box_name = Storage.Get(Storage.CurrentContext, box_name_key);
-            if (box_name != null) return false;
+            if (box_name.AsBigInteger() != 0) return false;
 
             // save owner of name
             Storage.Put(Storage.CurrentContext, box_owner_key, owner);
@@ -425,12 +425,12 @@ namespace Neo.SmartContract
 
             // verify if target box exists
             var to_owner = GetAddressFromMailbox(to_mailbox);
-            if (to_owner == null) return false;
+            if (to_owner.AsBigInteger() == 0) return false;
 
             var from_box_key = box_names_prefix.Concat(owner);
             var from_mailbox = Storage.Get(Storage.CurrentContext, from_box_key);
             // verify if source box exists
-            if (from_mailbox == null) return false;
+            if (from_mailbox.AsBigInteger() == 0) return false;
 
             AppendToBox(inbox_size_prefix, inbox_content_prefix, to_mailbox, hash);
             AppendToBox(outbox_size_prefix, outbox_content_prefix, from_mailbox, hash);
@@ -447,17 +447,16 @@ namespace Neo.SmartContract
             var mailbox_key = box_names_prefix.Concat(owner);
             var mailbox = Storage.Get(Storage.CurrentContext, mailbox_key);
             // verify if name exists
-            if (mailbox == null) return false;
+            if (mailbox.AsBigInteger() == 0) return false;
 
             // get mailbox current size
             var box_size_key = box_count_prefix.Concat(mailbox);
-            var temp = Storage.Get(Storage.CurrentContext, box_size_key);
-            var mailcount = temp.AsBigInteger();
+            var mailcount = Storage.Get(Storage.CurrentContext, box_size_key).AsBigInteger();
             if (index > mailcount) return false;
 
             // copy value in last box
             var basekey = box_content_prefix.Concat(mailbox);
-            var lastkey = basekey.Concat(temp);
+            var lastkey = basekey.Concat(mailcount.AsByteArray());
             var lastval = Storage.Get(Storage.CurrentContext, lastkey);
             Storage.Delete(Storage.CurrentContext, lastkey);
 
