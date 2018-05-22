@@ -226,7 +226,7 @@ namespace Neo.SmartContract
                 #region SALE METHODS
                 else if (operation == "deploy") return Deploy();
                 else if (operation == "mintTokens") return MintTokens();
-
+                else if (operation == "mintTokensRemaining") return MintTokensRemaining();
                 else if (operation == "availableTokens") return AvailableTokens();
 
                 else if (operation == "whitelistCheckOne")
@@ -714,6 +714,7 @@ namespace Neo.SmartContract
         public static readonly byte[] Platform_Address = "AQFQmVQi9VReLhym1tF3UfPk4EG3VKbAwN".ToScriptHash();
         public static readonly byte[] Presale_Address = "ARWHJefSbhayC2gurKkpjMHm5ReaJZLLJ3".ToScriptHash();
         public static readonly byte[] Sale1_Address = "ARWHJefSbhayC2gurKkpjMHm5ReaJZLLJ3".ToScriptHash();
+        public static readonly byte[] Airdrop_Address = "ARWHJefSbhayC2gurKkpjMHm5ReaJZLLJ3".ToScriptHash();
 
         public static readonly byte[] Whitelist_Address1 = "AU3HnDtGjiH4WGPSFAGBTDXPCxZgoCnoJJ".ToScriptHash();
         public static readonly byte[] Whitelist_Address2 = "ATMSoKwfupymhmej3iLA12HabyuHPNGwDx".ToScriptHash();
@@ -993,6 +994,23 @@ namespace Neo.SmartContract
             Storage.Put(Storage.CurrentContext, "totalSupply", current_total_supply + token_amount);
             Storage.Put(Storage.CurrentContext, tx_key, tx.Hash);
 
+            return true;
+        }
+
+
+        public static bool MintTokensRemaining()
+        {
+            if (!Runtime.CheckWitness(Airdrop_Address))
+                return false;
+
+            BigInteger remaining = AvailableTokens();
+            CreditTokensToAddress(Airdrop_Address, remaining);
+            OnMint(Airdrop_Address, remaining);
+
+            // adjust total supply
+            var current_total_supply = Storage.Get(Storage.CurrentContext, "totalSupply").AsBigInteger();
+            Storage.Put(Storage.CurrentContext, "totalSupply", current_total_supply + remaining);
+            // total_supply should match max_supply now
             return true;
         }
 
