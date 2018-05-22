@@ -721,7 +721,10 @@ namespace Neo.SmartContract
         // checks if addresses are on the whitelist
         public static byte[] WhitelistCheckAll(object[] addresses)
         {
-            byte[] res = new byte[addresses.Length];
+            if (addresses.Length > 10)
+                return null;
+
+            byte[] res = new byte[10];
             int i = 0;
 
             foreach (var entry in addresses)
