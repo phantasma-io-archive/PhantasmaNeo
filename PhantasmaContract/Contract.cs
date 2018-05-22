@@ -219,11 +219,17 @@ namespace Neo.SmartContract
 
                 else if (operation == "availableTokens") return AvailableTokens();
 
-                else if (operation == "whitelistCheck")
+                else if (operation == "whitelistCheckOne")
                 {
                     if (args.Length != 1) return false;
                     byte[] address = (byte[])args[0];
-                    return WhitelistCheck(address);
+                    return WhitelistCheckOne(address);
+                }
+
+                else if (operation == "whitelistCheckAll")
+                {
+                    if (args.Length == 0) return false;
+                    return WhitelistCheckAll(args);
                 }
 
                 else if (operation == "whitelistAdd")
@@ -656,12 +662,15 @@ namespace Neo.SmartContract
         public static readonly byte[] Platform_Address = "AQFQmVQi9VReLhym1tF3UfPk4EG3VKbAwN".ToScriptHash();
         public static readonly byte[] Presale_Address = "ARWHJefSbhayC2gurKkpjMHm5ReaJZLLJ3".ToScriptHash();
 
-        public static readonly byte[] Whitelist_Address1 = "AYQ3FMw4oEjqEaHp4n6ZxJTpBuyp5FTCge".ToScriptHash();
+        public static readonly byte[] Whitelist_Address1 = "AU3HnDtGjiH4WGPSFAGBTDXPCxZgoCnoJJ".ToScriptHash();
         public static readonly byte[] Whitelist_Address2 = "ATMSoKwfupymhmej3iLA12HabyuHPNGwDx".ToScriptHash();
         public static readonly byte[] Whitelist_Address3 = "AQgTdM2NAQvbRpCcBcXJWZnfTdESHaFFdc".ToScriptHash();
         public static readonly byte[] Whitelist_Address4 = "ALokKyd98P6EQiqoV8CdyQbs3sgAteUyX8".ToScriptHash();
+
         public static readonly byte[] Whitelist_Address5 = "ALtsedMdcrbsExZc6hr2va8cAzfia99ViU".ToScriptHash();
         public static readonly byte[] Whitelist_Address6 = "AeqDFJj492eDdo8Be8qhhMdSLjDZYt7k37".ToScriptHash();
+        public static readonly byte[] Whitelist_Address7 = "APoNG569i7oA5ovPQVr7J2zpcXDAgje3Dp".ToScriptHash();
+        public static readonly byte[] Whitelist_Address8 = "Ab9LBFMbo5SkZH3dkNFuMeDLHirrSNRapE".ToScriptHash();
 
         public const ulong soul_decimals = 100000000; //decided by Decimals()
         public const ulong neo_decimals = 100000000;
@@ -700,13 +709,33 @@ namespace Neo.SmartContract
         private static readonly byte[] mint_prefix = { (byte)'M', (byte)'I', (byte)'N', (byte)'T' };
 
         // checks if address is on the whitelist
-        public static bool WhitelistCheck(byte[] address)
+        public static bool WhitelistCheckOne(byte[] address)
         {
             if (!ValidateAddress(address)) return false;
             var key = whitelist_prefix.Concat(address);
             var val = Storage.Get(Storage.CurrentContext, key).AsBigInteger();
             if (val > 0) return true;
             else return false;
+        }
+
+        // checks if addresses are on the whitelist
+        public static byte[] WhitelistCheckAll(object[] addresses)
+        {
+            byte[] res = new byte[addresses.Length];
+            int i = 0;
+
+            foreach (var entry in addresses)
+            {
+                var address = (byte[])entry;
+                var key = whitelist_prefix.Concat(address);
+                var val = Storage.Get(Storage.CurrentContext, key).AsBigInteger();
+                if (val > 0)
+                    res[i] = 1;
+                else
+                    res[i] = 0;
+                i = i+1;
+            }
+            return res;
         }
 
         private static bool IsWhitelistingWitness()
@@ -724,6 +753,10 @@ namespace Neo.SmartContract
             if (Runtime.CheckWitness(Whitelist_Address5))
                 return true;
             if (Runtime.CheckWitness(Whitelist_Address6))
+                return true;
+            if (Runtime.CheckWitness(Whitelist_Address7))
+                return true;
+            if (Runtime.CheckWitness(Whitelist_Address8))
                 return true;
             return false;
         }
