@@ -127,7 +127,7 @@ namespace Neo.SmartContract
                 }
                 else if (operation == "removeOutboxMessage")
                 {
-                    if (args.Length != 3) return false;
+                    if (args.Length != 2) return false;
                     byte[] owner = (byte[])args[0];
                     BigInteger index = (BigInteger)args[1];
                     return RemoveOutboxMessage(owner, index);
