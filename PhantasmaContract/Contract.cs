@@ -27,7 +27,7 @@ namespace Neo.SmartContract
 
         #region UTILITY METHODS
 
-        private static bool ValidateAddress(byte[] address)
+        public static bool ValidateAddress(byte[] address)
         {
             if (address.Length != 20)
                 return false;
@@ -36,7 +36,7 @@ namespace Neo.SmartContract
             return true;
         }
 
-        private static bool ValidateMailboxMame(byte[] mailbox_name)
+        public static bool ValidateMailboxName(byte[] mailbox_name)
         {
             if (mailbox_name.Length <= 4 || mailbox_name.Length >= 20)
                 return false;
@@ -157,6 +157,21 @@ namespace Neo.SmartContract
                     byte[] mailbox = (byte[])args[0];
                     BigInteger index = (BigInteger)args[1];
                     return GetOutboxContent(mailbox, index);
+                }
+                #endregion
+
+                #region UTILS AND VALIDATION
+                else if (operation == "validateMailboxName")
+                {
+                    if (args.Length != 1) return false;
+                    byte[]  mailbox = (byte[])args[0];
+                    return ValidateMailboxName(mailbox);
+                }
+                else if (operation == "validateAddress")
+                {
+                    if (args.Length != 1) return false;
+                    byte[] address = (byte[])args[0];
+                    return ValidateAddress(address);
                 }
                 #endregion
 
@@ -332,7 +347,7 @@ namespace Neo.SmartContract
 
         public static byte[] GetAddressFromMailbox(byte[] mailbox)
         {
-            if (!ValidateMailboxMame(mailbox)) return null;
+            if (!ValidateMailboxName(mailbox)) return null;
             var key = box_owners_prefix.Concat(mailbox);
             byte[] value = Storage.Get(Storage.CurrentContext, key);
             return value;
@@ -341,7 +356,7 @@ namespace Neo.SmartContract
         public static bool RegisterMailbox(byte[] owner, byte[] mailbox)
         {
             if (!Runtime.CheckWitness(owner)) return false;
-            if (!ValidateMailboxMame(mailbox)) return false;
+            if (!ValidateMailboxName(mailbox)) return false;
 
             // verify if name already in use
             var box_owner_key = box_owners_prefix.Concat(mailbox);
@@ -485,7 +500,7 @@ namespace Neo.SmartContract
         // it must come as an outside input and be validated there
         public static BigInteger GetInboxCount(byte[] mailbox)
         {
-            if (!ValidateMailboxMame(mailbox)) return 0;
+            if (!ValidateMailboxName(mailbox)) return 0;
             var key = inbox_size_prefix.Concat(mailbox);
             var value = Storage.Get(Storage.CurrentContext, key);
             return value.AsBigInteger();
@@ -493,7 +508,7 @@ namespace Neo.SmartContract
 
         public static BigInteger GetOutboxCount(byte[] mailbox)
         {
-            if (!ValidateMailboxMame(mailbox)) return 0;
+            if (!ValidateMailboxName(mailbox)) return 0;
             var key = outbox_size_prefix.Concat(mailbox);
             var value = Storage.Get(Storage.CurrentContext, key);
             return value.AsBigInteger();
@@ -502,7 +517,7 @@ namespace Neo.SmartContract
         // Index is 1-based
         public static byte[] GetInboxContent(byte[] mailbox, BigInteger index)
         {
-            if (!ValidateMailboxMame(mailbox)) return null;
+            if (!ValidateMailboxName(mailbox)) return null;
             if (index <= 0) return null;
 
             var mailbox_size = GetInboxCount(mailbox);
@@ -515,7 +530,7 @@ namespace Neo.SmartContract
         // Index is 1-based
         public static byte[] GetOutboxContent(byte[] mailbox, BigInteger index)
         {
-            if (!ValidateMailboxMame(mailbox)) return null;
+            if (!ValidateMailboxName(mailbox)) return null;
             if (index <= 0) return null;
 
             var mailbox_size = GetOutboxCount(mailbox);
