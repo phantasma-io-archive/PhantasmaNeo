@@ -962,25 +962,22 @@ namespace Neo.SmartContract
         // only called from a verified context
         private static BigInteger CheckPurchaseAmount(byte[] sender, BigInteger neo_value, bool apply)
         {
-            BigInteger tokens_to_refund = 0;
-            BigInteger tokens_to_give;
+            BigInteger tokens_to_give = (neo_value / neo_decimals) * token_swap_rate;
 
             var cur_time = Runtime.Time;
+           // most common case
             if (cur_time >= ico_end_time || cur_time < ico_start_time)
             {
-                // most common case
-                if (apply == false)
-                    return 0;
-
-                tokens_to_give = 0;
-            }
-            else
-            {
-                tokens_to_give = (neo_value / neo_decimals) * token_swap_rate;
+                if (apply)
+                {
+                    OnRefund(sender, (tokens_to_give / token_swap_rate) * neo_decimals);
+                }
+                return 0;
             }
 
             BigInteger current_supply = Storage.Get(Storage.CurrentContext, "totalSupply").AsBigInteger();
             BigInteger tokens_available = max_supply - current_supply;
+            BigInteger tokens_to_refund = 0;
 
             // check global hard cap
             if (tokens_to_give > tokens_available)
@@ -1020,16 +1017,6 @@ namespace Neo.SmartContract
                     var diff = (new_balance - individual_cap);
                     tokens_to_refund += diff;
                     tokens_to_give -= diff;
-                }
-            }
-
-            if (apply)
-            {
-                // here we do partial refunds only, full refunds are done in verification trigger!
-                if (tokens_to_refund > 0 && tokens_to_give > 0)
-                {
-                    // convert amount to NEO
-                    OnRefund(sender, (tokens_to_refund / token_swap_rate) * neo_decimals);
                 }
             }
 
