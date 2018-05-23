@@ -269,6 +269,12 @@ namespace Neo.SmartContract
                     return WhitelistAddFilled(args);
                 }
 
+                else if (operation == "WhitelistAddCap")
+                {
+                    if (args.Length == 0) return false;
+                    return WhitelistAddCap(args);
+                }
+
                 else if (operation == "whitelistRemove")
                 {
                     if (args.Length == 0) return false;
