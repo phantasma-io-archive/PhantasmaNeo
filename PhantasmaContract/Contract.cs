@@ -795,12 +795,12 @@ namespace Neo.SmartContract
         }
 
         // checks if addresses are on the whitelist
-        public static byte[] WhitelistCheckAll(object[] addresses)
+        public static uint WhitelistCheckAll(object[] addresses)
         {
-            if (addresses.Length > 10)
-                return null;
+            if (addresses.Length > 32)
+                return 0;
 
-            byte[] res = new byte[10];
+            uint res = 0;
             int i = 0;
 
             foreach (var entry in addresses)
@@ -809,9 +809,7 @@ namespace Neo.SmartContract
                 var key = whitelist_prefix.Concat(address);
                 var val = Storage.Get(Storage.CurrentContext, key).AsBigInteger();
                 if (val > 0)
-                    res[i] = 1;
-                else
-                    res[i] = 0;
+                    res = res | (uint) (1 << i);
                 i = i+1;
             }
             return res;
