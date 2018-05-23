@@ -132,6 +132,16 @@ namespace Neo.SmartContract
                     BigInteger index = (BigInteger)args[1];
                     return RemoveOutboxMessage(owner, index);
                 }
+                else if (operation == "removeInboxMessages")
+                {
+                    if (args.Length < 2) return false;
+                    return RemoveInboxMessages(args);
+                }
+                else if (operation == "removeOutboxMessages")
+                {
+                    if (args.Length < 2) return false;
+                    return RemoveOutboxMessages(args);
+                }
                 else if (operation == "getInboxCount")
                 {
                     if (args.Length != 1) return false;
@@ -479,6 +489,43 @@ namespace Neo.SmartContract
         public static bool RemoveOutboxMessage(byte[] owner, BigInteger index)
         {
             return RemoveMessage(owner, index, outbox_size_prefix, outbox_content_prefix);
+        }
+
+
+        private static bool RemoveMessages(object[] args, byte[] box_count_prefix, byte[] box_content_prefix)
+        {
+            if (args.Length < 2) return false;
+            byte[] owner = (byte[])args[0];
+            if (!Runtime.CheckWitness(owner)) return false;
+
+            // ensure all indexes are striclty ordered, in increasing order
+            BigInteger last_index = -1;
+            for (int i = 1; i < args.Length; i = i+1)
+            {
+                BigInteger index = (BigInteger) args[i];
+                if (index <= 0)
+                    return false;
+                if (last_index >= index)
+                    return false;
+                last_index = index;
+            }
+
+            for (int i = args.Length-1; i > 0; i = i-1)
+            {
+                BigInteger index = (BigInteger)args[i];
+                RemoveMessage(owner, index, box_content_prefix, box_content_prefix);
+            }
+            return true;
+        }
+
+        public static bool RemoveInboxMessages(object[] args)
+        {
+            return RemoveMessages(args, inbox_size_prefix, inbox_content_prefix);
+        }
+
+        public static bool RemoveOutboxMessages(object[] args)
+        {
+            return RemoveMessages(args, outbox_size_prefix, outbox_content_prefix);
         }
 
         // we assume the mailbox name is never created internally,
