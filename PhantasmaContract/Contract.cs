@@ -732,13 +732,12 @@ namespace Neo.SmartContract
         //ICO Settings
         public static readonly byte[] neo_asset_id = { 155, 124, 255, 218, 166, 116, 190, 174, 15, 147, 14, 190, 96, 133, 175, 144, 147, 229, 254, 86, 179, 74, 92, 34, 12, 205, 207, 110, 252, 51, 111, 197 };
 
-        public const ulong max_supply = 91136510 * soul_decimals; // total token amount
+        public const ulong max_supply = 91136374 * soul_decimals; // total token amount
         public const ulong team_supply = 14500000 * soul_decimals; // team token amount
         public const ulong advisor_supply = 5500000 * soul_decimals; // advisor token amount
         public const ulong platform_supply = 15000000 * soul_decimals; // company token amount
         public const ulong presale_supply = 43503435 * soul_decimals; // presale token amount
-
-        public const ulong sale1_supply = 1200000 * soul_decimals; // sale1 token amount. *temporary*
+        public const ulong sale1_supply = 6316538 * soul_decimals; // sale1 token amount
 
         public const ulong team_monthly_supply = 1450000 * soul_decimals; // team monthly share
         public const ulong advisor_monthly_supply = 550000 * soul_decimals; // advisor monthly share
