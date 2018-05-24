@@ -540,7 +540,7 @@ namespace Neo.SmartContract
             for (int i = args.Length-1; i > 0; i = i-1)
             {
                 BigInteger index = (BigInteger)args[i];
-                RemoveMessage(owner, index, box_content_prefix, box_content_prefix);
+                RemoveMessage(owner, index, box_count_prefix, box_content_prefix);
             }
             return true;
         }
