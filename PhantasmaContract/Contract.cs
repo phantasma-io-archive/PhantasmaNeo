@@ -257,7 +257,7 @@ namespace Neo.SmartContract
                     return WhitelistCheckAll(args);
                 }
 
-                else if (operation == "WhitelistAddFree")
+                else if (operation == "whitelistAddFree")
                 {
                     if (args.Length == 0) return false;
                     return WhitelistAddFree(args);
@@ -269,7 +269,7 @@ namespace Neo.SmartContract
                     return WhitelistAddFilled(args);
                 }
 
-                else if (operation == "WhitelistAddCap")
+                else if (operation == "whitelistAddCap")
                 {
                     if (args.Length == 0) return false;
                     return WhitelistAddCap(args);
