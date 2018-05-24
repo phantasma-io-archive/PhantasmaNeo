@@ -206,6 +206,13 @@ namespace Neo.SmartContract
                     return BalanceOf(account);
                 }
 
+                else if (operation == "boughtTokens")
+                {
+                    if (args.Length != 1) return 0;
+                    byte[] account = (byte[])args[0];
+                    return BoughtAmount(account);
+                }
+
                 else if (operation == "decimals") return Decimals();
                 #endregion
 
@@ -647,6 +654,13 @@ namespace Neo.SmartContract
             Storage.Put(Storage.CurrentContext, to, to_value + value);
             OnTransferred(from, to, value);
             return true;
+        }
+
+        public static BigInteger BoughtAmount(byte[] address)
+        {
+            if (!ValidateAddress(address)) return 0;
+            var bought_key = bought_prefix.Concat(address);
+            return Storage.Get(Storage.CurrentContext, bought_key).AsBigInteger();
         }
 
         // Get the account balance of another account with address
