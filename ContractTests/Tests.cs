@@ -135,6 +135,28 @@ namespace PhantasmaTests
         }
 
         [Test]
+        public void TestSaleTime()
+        {
+            Assert.IsTrue(PhantasmaContract.ico_start_time < PhantasmaContract.ico_war_time);
+            Assert.IsTrue(PhantasmaContract.ico_war_time < PhantasmaContract.ico_end_time);
+
+            var start_date = PhantasmaContract.ico_start_time.ToDateTime();
+            Assert.IsTrue(start_date.Day == 27);
+            Assert.IsTrue(start_date.Month == 5);
+            Assert.IsTrue(start_date.Year == 2018);
+
+            var war_date = PhantasmaContract.ico_war_time.ToDateTime();
+            Assert.IsTrue(war_date.Day == 28);
+            Assert.IsTrue(war_date.Month == 5);
+            Assert.IsTrue(war_date.Year == 2018);
+
+            var end_date = PhantasmaContract.ico_start_time.ToDateTime();
+            Assert.IsTrue(end_date.Day == 30);
+            Assert.IsTrue(end_date.Month == 5);
+            Assert.IsTrue(end_date.Year == 2018);
+        }
+
+        [Test]
         public void TestTokenDeploy()
         {
             var env = new TestEnviroment(0);
@@ -312,7 +334,7 @@ namespace PhantasmaTests
         {
             var env = new TestEnviroment(20);
 
-            env.api.Chain.Time = PhantasmaContract.ico_start_time + 100;
+            env.api.Chain.Time = PhantasmaContract.ico_start_time + 1;
 
             var total_amount = 0;
 
@@ -326,6 +348,9 @@ namespace PhantasmaTests
 
                 env.api.SendAsset(env.owner_keys, env.whitelisted_buyerKeys[n].address, "NEO", neo_amount);
 
+                Assert.IsTrue(env.api.Chain.Time > PhantasmaContract.ico_start_time);
+                Assert.IsTrue(env.api.Chain.Time < PhantasmaContract.ico_war_time);
+
                 var tx = TokenSale.MintTokens(env.token, env.whitelisted_buyerKeys[n], "NEO", neo_amount);
 
                 Assert.IsNotNull(tx);
@@ -333,9 +358,6 @@ namespace PhantasmaTests
                 var notifications = env.api.Chain.GetNotifications(tx);
                 //Assert.IsNotNull(notifications);
                 //Assert.IsTrue(notifications.Count == 1);
-
-                // advance time
-                env.api.Chain.Time += (uint)(1000 * (n%6) * 20);
 
                 var balance = env.token.BalanceOf(env.whitelisted_buyerKeys[n]);
 
