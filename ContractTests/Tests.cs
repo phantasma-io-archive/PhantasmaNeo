@@ -97,7 +97,7 @@ namespace PhantasmaTests
     [TestFixture]
     public class ContractTests
     {
-        public static byte[] contract_script_bytes { get; set; }
+        public static byte[] contract_script_bytes { get;  set; }
         public static UInt160 contract_script_hash { get; set; }
 
         private string contract_folder;
@@ -144,16 +144,22 @@ namespace PhantasmaTests
             Assert.IsTrue(start_date.Day == 27);
             Assert.IsTrue(start_date.Month == 5);
             Assert.IsTrue(start_date.Year == 2018);
+            Assert.IsTrue(start_date.Hour == 0);
+            Assert.IsTrue(start_date.Minute == 0);
 
             var war_date = PhantasmaContract.ico_war_time.ToDateTime();
             Assert.IsTrue(war_date.Day == 28);
             Assert.IsTrue(war_date.Month == 5);
             Assert.IsTrue(war_date.Year == 2018);
+            Assert.IsTrue(war_date.Hour == 0);
+            Assert.IsTrue(war_date.Minute == 0);
 
             var end_date = PhantasmaContract.ico_start_time.ToDateTime();
-            Assert.IsTrue(end_date.Day == 30);
+            Assert.IsTrue(end_date.Day == 29);
             Assert.IsTrue(end_date.Month == 5);
             Assert.IsTrue(end_date.Year == 2018);
+            Assert.IsTrue(end_date.Hour == 0);
+            Assert.IsTrue(end_date.Minute == 0);
         }
 
         [Test]
