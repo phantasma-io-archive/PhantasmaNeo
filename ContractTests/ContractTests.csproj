@@ -61,10 +61,6 @@
       <Project>{DCE50E4D-2D65-4ABC-B205-D72353565BAF}</Project>
       <Name>Neo.Lux</Name>
     </ProjectReference>
-    <ProjectReference Include="..\NeoEmulator\Neo.Emulator.csproj">
-      <Project>{EF7D9656-4048-440A-B0E0-0F1CF45874C2}</Project>
-      <Name>Neo.Emulator</Name>
-    </ProjectReference>
     <ProjectReference Include="..\PhantasmaContract\PhantasmaContract.csproj">
       <Project>{34A64BC7-A8D7-425B-88C0-677EE28B8938}</Project>
       <Name>PhantasmaContract</Name>
