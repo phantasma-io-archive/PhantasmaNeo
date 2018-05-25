@@ -780,8 +780,8 @@ namespace Neo.SmartContract
         public static readonly byte[] Advisor_Address = "AKvFhNqJUkGzHCiwrEAfSEG3fP1fNtji1F".ToScriptHash();
         public static readonly byte[] Platform_Address = "AQFQmVQi9VReLhym1tF3UfPk4EG3VKbAwN".ToScriptHash();
         public static readonly byte[] Presale_Address = "ARWHJefSbhayC2gurKkpjMHm5ReaJZLLJ3".ToScriptHash();
-        public static readonly byte[] Sale1_Address = "ARWHJefSbhayC2gurKkpjMHm5ReaJZLLJ3".ToScriptHash();
-        public static readonly byte[] Airdrop_Address = "ARWHJefSbhayC2gurKkpjMHm5ReaJZLLJ3".ToScriptHash();
+        public static readonly byte[] Sale1_Address = "Abyd4BcStNksGLmfdHtyyPbS1xzhceDKLs".ToScriptHash();
+        public static readonly byte[] Airdrop_Address = "AdpNYoumn4uyTh3reB8hhb6s9asjnZmtHt".ToScriptHash();
 
         public static readonly byte[] Whitelist_Address1 = "AU3HnDtGjiH4WGPSFAGBTDXPCxZgoCnoJJ".ToScriptHash();
         public static readonly byte[] Whitelist_Address2 = "ATMSoKwfupymhmej3iLA12HabyuHPNGwDx".ToScriptHash();
@@ -813,9 +813,9 @@ namespace Neo.SmartContract
         public const ulong token_initial_cap = 10 * token_swap_rate; // max tokens than an individual can buy from to the sale in the first round, guaranteed
         public const ulong token_war_cap = 60 * token_swap_rate; // max tokens than an individual can buy from to the sale in the second round, not guaranteed
 
-        public const uint ico_start_time = 1526947200; // 22 May 00h00 UTC       
-        public const uint ico_war_time = 1527033600; // 23 May 00h00 UTC
-        public const uint ico_end_time = 1527552000; // 29 May 00h00 UTC
+        public const uint ico_start_time = 1527379200; // 27 May 00h00 UTC
+        public const uint ico_war_time = 1527465600; // 28 May 00h00 UTC
+        public const uint ico_end_time = 1527500000; // 28 May 09h33 UTC
 
         [DisplayName("whitelist_add")]
         public static event Action<byte[]> OnWhitelistAdd;
