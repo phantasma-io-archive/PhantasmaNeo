@@ -744,6 +744,7 @@ namespace Neo.SmartContract
         public const ulong advisor_supply = 5500000 * soul_decimals; // advisor token amount
         public const ulong platform_supply = 15000000 * soul_decimals; // company token amount
         public const ulong presale_supply = 43503435 * soul_decimals; // presale token amount
+        public const ulong initialSupply = team_supply + advisor_supply + presale_supply + platform_supply;
 
         public const ulong team_monthly_supply = 1450000 * soul_decimals; // team monthly share
         public const ulong advisor_monthly_supply = 550000 * soul_decimals; // advisor monthly share
@@ -890,8 +891,6 @@ namespace Neo.SmartContract
             {
                 return false;
             }
-
-            var initialSupply = team_supply + advisor_supply + presale_supply + platform_supply;
 
             // team and advisor supply is locked, storage stays at zero here
 
