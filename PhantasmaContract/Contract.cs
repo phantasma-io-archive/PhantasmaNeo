@@ -543,7 +543,6 @@ namespace Neo.SmartContract
             // get mailbox current size
             var box_size_key = box_count_prefix.Concat(mailbox);
             var mailcount = Storage.Get(Storage.CurrentContext, box_size_key).AsBigInteger();
-            if (index > mailcount) return false;
 
             // ensure all indexes are striclty ordered, in increasing order
             BigInteger last_index = -1;
