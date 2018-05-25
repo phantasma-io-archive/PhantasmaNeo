@@ -24,43 +24,6 @@ namespace Neo.SmartContract
 {
     public class PhantasmaContract : Framework.SmartContract
     {
-
-        #region UTILITY METHODS
-
-        public static bool ValidateAddress(byte[] address)
-        {
-            if (address.Length != 20)
-                return false;
-            if (address.AsBigInteger() == 0)
-                return false;
-            return true;
-        }
-
-        public static bool ValidateMailboxName(byte[] mailbox_name)
-        {
-            if (mailbox_name.Length <= 4 || mailbox_name.Length >= 20)
-                return false;
-            if (mailbox_name.AsBigInteger() == 0)
-                return false;
-
-            int index = 0;
-            while (index < mailbox_name.Length)
-            {
-                var c = mailbox_name[index];
-                index++;
-
-                if (c >= 97 && c <= 122) continue; // lowercase allowed
-                if (c == 95) continue; // underscore allowed
-                if (c >= 48 && c <= 57) continue; // numbers allowed
-
-                return false;
-            }
-
-            return true;
-        }
-
-        #endregion
-
         // params: 0710
         // return : 05
 
@@ -319,6 +282,43 @@ namespace Neo.SmartContract
 
             return false;
         }
+
+
+        #region UTILITY METHODS
+
+        public static bool ValidateAddress(byte[] address)
+        {
+            if (address.Length != 20)
+                return false;
+            if (address.AsBigInteger() == 0)
+                return false;
+            return true;
+        }
+
+        public static bool ValidateMailboxName(byte[] mailbox_name)
+        {
+            if (mailbox_name.Length <= 4 || mailbox_name.Length >= 20)
+                return false;
+            if (mailbox_name.AsBigInteger() == 0)
+                return false;
+
+            int index = 0;
+            while (index < mailbox_name.Length)
+            {
+                var c = mailbox_name[index];
+                index++;
+
+                if (c >= 97 && c <= 122) continue; // lowercase allowed
+                if (c == 95) continue; // underscore allowed
+                if (c >= 48 && c <= 57) continue; // numbers allowed
+
+                return false;
+            }
+
+            return true;
+        }
+
+        #endregion
 
         #region CROSSCHAIN API
         public static bool ExecuteChainSwap(byte[] neo_address, byte[] phantasma_address, BigInteger amount)
