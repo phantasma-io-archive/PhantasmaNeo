@@ -47,6 +47,33 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\PhantasmaContract\Contract.cs">
+      <Link>Contract.cs</Link>
+    </Compile>
+    <Compile Include="Neo.SmartContract.Framework\Helper.cs" />
+    <Compile Include="Neo.SmartContract.Framework\IApiInterface.cs" />
+    <Compile Include="Neo.SmartContract.Framework\IScriptContainer.cs" />
+    <Compile Include="Neo.SmartContract.Framework\Map.cs" />
+    <Compile Include="Neo.SmartContract.Framework\Services\Neo\Account.cs" />
+    <Compile Include="Neo.SmartContract.Framework\Services\Neo\Asset.cs" />
+    <Compile Include="Neo.SmartContract.Framework\Services\Neo\Block.cs" />
+    <Compile Include="Neo.SmartContract.Framework\Services\Neo\Blockchain.cs" />
+    <Compile Include="Neo.SmartContract.Framework\Services\Neo\Contract.cs" />
+    <Compile Include="Neo.SmartContract.Framework\Services\Neo\Header.cs" />
+    <Compile Include="Neo.SmartContract.Framework\Services\Neo\Helper.cs" />
+    <Compile Include="Neo.SmartContract.Framework\Services\Neo\InvocationTransaction.cs" />
+    <Compile Include="Neo.SmartContract.Framework\Services\Neo\Iterator.cs" />
+    <Compile Include="Neo.SmartContract.Framework\Services\Neo\Runtime.cs" />
+    <Compile Include="Neo.SmartContract.Framework\Services\Neo\Storage.cs" />
+    <Compile Include="Neo.SmartContract.Framework\Services\Neo\StorageContext.cs" />
+    <Compile Include="Neo.SmartContract.Framework\Services\Neo\StorageMap.cs" />
+    <Compile Include="Neo.SmartContract.Framework\Services\Neo\Transaction.cs" />
+    <Compile Include="Neo.SmartContract.Framework\Services\Neo\TransactionAttribute.cs" />
+    <Compile Include="Neo.SmartContract.Framework\Services\Neo\TransactionInput.cs" />
+    <Compile Include="Neo.SmartContract.Framework\Services\Neo\TransactionOutput.cs" />
+    <Compile Include="Neo.SmartContract.Framework\Services\Neo\TriggerType.cs" />
+    <Compile Include="Neo.SmartContract.Framework\Services\System\ExecutionEngine.cs" />
+    <Compile Include="Neo.SmartContract.Framework\SmartContract.cs" />
     <Compile Include="Tests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -60,10 +87,6 @@
     <ProjectReference Include="..\..\Neo.Lux\Neo.Lux\Neo.Lux.csproj">
       <Project>{DCE50E4D-2D65-4ABC-B205-D72353565BAF}</Project>
       <Name>Neo.Lux</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\PhantasmaContract\PhantasmaContract.csproj">
-      <Project>{34A64BC7-A8D7-425B-88C0-677EE28B8938}</Project>
-      <Name>PhantasmaContract</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
