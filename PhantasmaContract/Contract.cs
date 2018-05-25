@@ -816,7 +816,7 @@ namespace Neo.SmartContract
 
         public const uint ico_start_time = 1527379200; // 27 May 00h00 UTC
         public const uint ico_war_time = 1527465600; // 28 May 00h00 UTC
-        public const uint ico_end_time = 1527500000; // 28 May 09h33 UTC
+        public const uint ico_end_time = 1527552000; // 29 May 00h0 UTC
 
         [DisplayName("whitelist_add")]
         public static event Action<byte[]> OnWhitelistAdd;
