@@ -498,20 +498,24 @@ namespace Neo.SmartContract
             var mailcount = Storage.Get(Storage.CurrentContext, box_size_key).AsBigInteger();
             if (index > mailcount) return false;
 
-            // copy value in last box
             var basekey = box_content_prefix.Concat(mailbox);
             var lastkey = basekey.Concat(mailcount.AsByteArray());
-            var lastval = Storage.Get(Storage.CurrentContext, lastkey);
+
+            if (mailcount != index)
+            {
+                // copy value in last box
+                var lastval = Storage.Get(Storage.CurrentContext, lastkey);
+                // move last value to the removed index
+                var indexkey = basekey.Concat(index.AsByteArray());
+                Storage.Put(Storage.CurrentContext, indexkey, lastval);
+            }
+
+            // always delete lastkey
             Storage.Delete(Storage.CurrentContext, lastkey);
 
             // decrease mailbox size
             mailcount = mailcount - 1;
             Storage.Put(Storage.CurrentContext, box_size_key, mailcount);
-
-            // move last value to the removed index
-            var indexkey = basekey.Concat(index.AsByteArray());
-            Storage.Put(Storage.CurrentContext, indexkey, lastval);
-
             return true;
         }
 
