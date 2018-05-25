@@ -50,17 +50,10 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="build.tasks" />
     <None Include="packages.config" />
   </ItemGroup>
-  <ItemGroup>
-    <Content Include="Neo.ConvertTask.dll" />
-  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <Import Project="Build.tasks" />
-  <Target Name="AfterBuild">
-    <Message Text="Start NeoContract converter, Source File: $(TargetPath)" Importance="high">
-    </Message>
-    <ConvertTask DataSource="$(TargetPath)" />
-  </Target>
+  <PropertyGroup>
+    <PostBuildEvent>neon.exe $(TargetDir)\PhantasmaContract.dll</PostBuildEvent>
+  </PropertyGroup>
 </Project>
