@@ -529,12 +529,21 @@ namespace Neo.SmartContract
             return RemoveMessage(owner, index, outbox_size_prefix, outbox_content_prefix);
         }
 
-
         private static bool RemoveMessages(object[] args, byte[] box_count_prefix, byte[] box_content_prefix)
         {
             if (args.Length < 2) return false;
             byte[] owner = (byte[])args[0];
             if (!Runtime.CheckWitness(owner)) return false;
+
+            var mailbox_key = box_names_prefix.Concat(owner);
+            var mailbox = Storage.Get(Storage.CurrentContext, mailbox_key);
+            // verify if name exists
+            if (mailbox.AsBigInteger() == 0) return false;
+
+            // get mailbox current size
+            var box_size_key = box_count_prefix.Concat(mailbox);
+            var mailcount = Storage.Get(Storage.CurrentContext, box_size_key).AsBigInteger();
+            if (index > mailcount) return false;
 
             // ensure all indexes are striclty ordered, in increasing order
             BigInteger last_index = -1;
@@ -545,14 +554,34 @@ namespace Neo.SmartContract
                     return false;
                 if (last_index >= index)
                     return false;
+                if (index > mailcount)
+                    return false;
+
                 last_index = index;
             }
+
+            var base_content_key = box_content_prefix.Concat(mailbox);
 
             for (int i = args.Length-1; i > 0; i = i-1)
             {
                 BigInteger index = (BigInteger)args[i];
-                RemoveMessage(owner, index, box_count_prefix, box_content_prefix);
+                var lastkey = base_content_key.Concat(mailcount.AsByteArray());
+
+                if (index != mailcount)
+                {
+                    // copy value in last box
+                    var lastval = Storage.Get(Storage.CurrentContext, lastkey);
+                    // move last value to the removed index
+                    var indexkey = base_content_key.Concat(index.AsByteArray());
+                    Storage.Put(Storage.CurrentContext, indexkey, lastval);
+                }
+
+                Storage.Delete(Storage.CurrentContext, lastkey);
+                mailcount = mailcount-1;
             }
+
+            // decrease mailbox size
+            Storage.Put(Storage.CurrentContext, box_size_key, mailcount);
             return true;
         }
 
