@@ -3,7 +3,7 @@
 Phantasma Smart Contract
 ========================
 
-Author: Sérgio Flores
+Author: Sérgio Flores / Miguel Ferreira
 
 Phantasma mail protocol 
 
