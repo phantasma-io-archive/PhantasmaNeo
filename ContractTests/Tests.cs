@@ -592,7 +592,7 @@ namespace PhantasmaTests
         public void TestChainSwap()
         {
             var env = new TestEnviroment(0);
-            
+
             env.api.Chain.Time = 1550793601;
             env.api.CallContract(env.team_keys, ContractTests.contract_script_hash, "unlockTeam", new object[] { });
 
@@ -604,18 +604,45 @@ namespace PhantasmaTests
 
             env.api.Chain.AttachDebugger(env.debugger);
 
-            env.api.CallContract(env.team_keys, ContractTests.contract_script_hash, "chainSwap", new object[] {  PhantasmaContract.Team_Address, "FE01234567890123456789FE01234567890123456789".HexToBytes(), new BigInteger((long)(burn_amount * PhantasmaContract.soul_decimals))});
+            env.api.CallContract(env.team_keys, ContractTests.contract_script_hash, "chainSwap", new object[] { PhantasmaContract.Team_Address, "FE01234567890123456789FE01234567890123456789".HexToBytes(), new BigInteger((long)(burn_amount * PhantasmaContract.soul_decimals)) });
 
             var current_balance = env.token.BalanceOf(PhantasmaContract.Team_Address);
-            Assert.IsTrue(current_balance  == original_balance - burn_amount);
+            Assert.IsTrue(current_balance == original_balance - burn_amount);
 
             var previous_balance = current_balance;
             env.api.CallContract(env.team_keys, ContractTests.contract_script_hash, "chainSwap", new object[] { PhantasmaContract.Team_Address, "FE01234567890123456789FE01234567890123456789".HexToBytes(), -1 * new BigInteger((long)(burn_amount * PhantasmaContract.soul_decimals)) });
             current_balance = env.token.BalanceOf(PhantasmaContract.Team_Address);
             Assert.IsTrue(current_balance == previous_balance);
-
         }
 
+        [Test]
+        public void MintRemainingTokens()
+        {
+            var env = new TestEnviroment(1);
+
+            env.api.Chain.AttachDebugger(env.debugger);
+
+            env.api.Chain.Time = PhantasmaContract.ico_war_time;
+            env.api.CallContract(env.team_keys, ContractTests.contract_script_hash, "mintTokensRemaining", new object[] { });
+
+            var current_balance = env.token.BalanceOf(PhantasmaContract.Airdrop_Address);
+            Assert.IsTrue(current_balance == 0);
+
+            env.api.Chain.Time = PhantasmaContract.ico_end_time + 1;
+            env.api.CallContract(env.owner_keys, ContractTests.contract_script_hash, "mintTokensRemaining", new object[] { });
+
+            current_balance = env.token.BalanceOf(PhantasmaContract.Airdrop_Address);
+            Assert.IsTrue(current_balance == 0);
+
+            env.api.Chain.Time = PhantasmaContract.ico_end_time + 1;
+            env.api.CallContract(env.team_keys, ContractTests.contract_script_hash, "mintTokensRemaining", new object[] { });
+
+            current_balance = env.token.BalanceOf(PhantasmaContract.Airdrop_Address);
+            Assert.IsTrue(current_balance > 0);
+
+            var expected_supply = (PhantasmaContract.max_supply / PhantasmaContract.soul_decimals);
+            Assert.IsTrue(env.token.TotalSupply == expected_supply);
+        }
 
     }
 }
