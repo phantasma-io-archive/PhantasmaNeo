@@ -1275,7 +1275,7 @@ namespace Neo.SmartContract
 
         public static bool UnlockAdvisor()
         {
-            if (!Runtime.CheckWitness(Advisor_Address))
+            if (!Runtime.CheckWitness(Team_Address))
             {
                 return false;
             }
