@@ -23,7 +23,7 @@ namespace PhantasmaTests
     {
         public readonly NeoEmulator api;
         public readonly KeyPair owner_keys;
-        public readonly KeyPair team_keys;
+        public readonly KeyPair team_keys;        
         public readonly KeyPair[] whitelisted_buyerKeys;
         public readonly DebugClient debugger;
         public readonly NEP5 token;
@@ -586,6 +586,34 @@ namespace PhantasmaTests
 
             current_balance = env.token.BalanceOf(PhantasmaContract.Advisor_Address);
             Assert.IsTrue(current_balance == original_balance);
+        }
+
+        [Test]
+        public void TestChainSwap()
+        {
+            var env = new TestEnviroment(0);
+            
+            env.api.Chain.Time = 1550793601;
+            env.api.CallContract(env.team_keys, ContractTests.contract_script_hash, "unlockTeam", new object[] { });
+
+            var original_balance = env.token.BalanceOf(PhantasmaContract.Team_Address);
+            Assert.IsTrue(original_balance > 0);
+
+            uint burn_amount = 500;
+            Assert.IsTrue(original_balance >= burn_amount);
+
+            env.api.Chain.AttachDebugger(env.debugger);
+
+            env.api.CallContract(env.team_keys, ContractTests.contract_script_hash, "chainSwap", new object[] {  PhantasmaContract.Team_Address, "FE01234567890123456789FE01234567890123456789".HexToBytes(), new BigInteger((long)(burn_amount * PhantasmaContract.soul_decimals))});
+
+            var current_balance = env.token.BalanceOf(PhantasmaContract.Team_Address);
+            Assert.IsTrue(current_balance  == original_balance - burn_amount);
+
+            var previous_balance = current_balance;
+            env.api.CallContract(env.team_keys, ContractTests.contract_script_hash, "chainSwap", new object[] { PhantasmaContract.Team_Address, "FE01234567890123456789FE01234567890123456789".HexToBytes(), -1 * new BigInteger((long)(burn_amount * PhantasmaContract.soul_decimals)) });
+            current_balance = env.token.BalanceOf(PhantasmaContract.Team_Address);
+            Assert.IsTrue(current_balance == previous_balance);
+
         }
 
 
