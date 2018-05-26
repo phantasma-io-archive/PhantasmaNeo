@@ -113,7 +113,8 @@ namespace PhantasmaTests
             var plaform_balance = this.token.BalanceOf(PhantasmaContract.Platform_Address);
             Assert.IsTrue(plaform_balance == (PhantasmaContract.platform_supply / PhantasmaContract.soul_decimals));
 
-            Assert.IsTrue(this.token.TotalSupply == (PhantasmaContract.initialSupply / PhantasmaContract.soul_decimals));
+            var expected_supply = (PhantasmaContract.initialSupply / PhantasmaContract.soul_decimals);
+            Assert.IsTrue(this.token.TotalSupply == expected_supply);
         }
 
         #region UTILS
