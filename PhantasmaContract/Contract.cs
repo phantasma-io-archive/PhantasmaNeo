@@ -7,9 +7,9 @@ Author: Sérgio Flores / Miguel Ferreira
 
 Phantasma mail protocol 
 
-txid: <to fill>
-script hash: <to fill>
-pubkey: <to fill>
+txid: https://neotracker.io/tx/d56d553f38234d73d04deacd9fd5f110d572898e8bd9c62333bbf7c31e1d1658
+script hash: ed07cffad18f1308db51920d99a2af60ac66a7b3
+address: AY9o94nWrUCEJ29UWhAodaJjQ16byjH852
 
 */
 
