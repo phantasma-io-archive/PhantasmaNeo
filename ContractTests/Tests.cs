@@ -10,6 +10,8 @@ using Neo.SmartContract;
 using System.Diagnostics;
 using System.Numerics;
 using Neo.Lux.Debugger;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 /*
  * DOCS HERE => http://docs.neo.org/en-us/sc/test.html
@@ -25,6 +27,8 @@ namespace PhantasmaTests
         public readonly KeyPair[] whitelisted_buyerKeys;
         public readonly DebugClient debugger;
         public readonly NEP5 token;
+
+        public readonly int swap_rate;
 
         public TestEnviroment(int buyers_count)
         {
@@ -43,19 +47,16 @@ namespace PhantasmaTests
                 Debug.WriteLine(x);
             });
 
+            Transaction tx;
+
             // create a random key for the team
             team_keys = KeyPair.GenerateAddress();
             // since the real team address is hardcoded in the contract, use BypassKey to give same permissions to this key
             this.api.Chain.BypassKey(new UInt160(PhantasmaContract.Team_Address), new UInt160(team_keys.address.AddressToScriptHash()));
 
-
-            api.Chain.AttachDebugger(debugger);
-
-            Transaction tx;
-
             tx = api.SendAsset(owner_keys, team_keys.address, "GAS", 800);
             Assert.IsNotNull(tx);
-
+            
             var balances = api.GetAssetBalancesOf(team_keys.address);
             Assert.IsTrue(balances.ContainsKey("GAS"));
             Assert.IsTrue(balances["GAS"] == 800);
@@ -66,16 +67,53 @@ namespace PhantasmaTests
             if (buyers_count > 0)
             {
                 whitelisted_buyerKeys = new KeyPair[buyers_count];
-                for (int i = 0; i < whitelisted_buyerKeys.Length; i++)
+                var indices = new int[buyers_count];
+
+                var addresses = new HashSet<string>();
+                for (int i=0; i<buyers_count; i++)
                 {
-                    whitelisted_buyerKeys[i] = KeyPair.GenerateAddress();
+                    string address;
+                    do
+                    {
+                        whitelisted_buyerKeys[i] = KeyPair.GenerateAddress();
+                        address = whitelisted_buyerKeys[i].address;
+                    } while (addresses.Contains(address));
+
+                    addresses.Add(address);
+                }
+
+                for (int i = 0; i < buyers_count; i++)
+                {
                     api.SendAsset(owner_keys, whitelisted_buyerKeys[i].address, "NEO", 100);
 
-                    api.CallContract(team_keys, ContractTests.contract_script_hash, "whitelistAdd", new object[] { whitelisted_buyerKeys[i].address.AddressToScriptHash() });
+                    api.CallContract(team_keys, ContractTests.contract_script_hash, "whitelistAddFree", new object[] { whitelisted_buyerKeys[i].address.AddressToScriptHash() });
                 }
             }
 
             this.token = new NEP5(api, ContractTests.contract_script_hash);
+
+            this.swap_rate = (int)(PhantasmaContract.token_swap_rate / PhantasmaContract.soul_decimals);
+
+            // do deploy
+            Assert.IsTrue(this.token.TotalSupply == 0);
+
+            tx = TokenSale.Deploy(this.token, this.team_keys);
+            Assert.IsNotNull(tx);
+
+            var notifications = this.api.Chain.GetNotifications(tx);
+            Assert.IsNotNull(notifications);
+            Assert.IsTrue(notifications.Count == 3);
+
+            var account = this.api.Chain.GetAccount(ContractTests.contract_script_hash);
+            Assert.IsTrue(account.storage.entries.Count > 0);
+
+            var presale_balance = this.token.BalanceOf(PhantasmaContract.Presale_Address);
+            Assert.IsTrue(presale_balance == (PhantasmaContract.presale_supply / PhantasmaContract.soul_decimals));
+
+            var plaform_balance = this.token.BalanceOf(PhantasmaContract.Platform_Address);
+            Assert.IsTrue(plaform_balance == (PhantasmaContract.platform_supply / PhantasmaContract.soul_decimals));
+
+            Assert.IsTrue(this.token.TotalSupply == (PhantasmaContract.initialSupply / PhantasmaContract.soul_decimals));
         }
 
         #region UTILS
@@ -90,6 +128,12 @@ namespace PhantasmaTests
             var bytes = (byte[])whitelist_result.stack[0];
             var is_whitelisted = bytes != null && bytes.Length > 0 ? bytes[0] : 0;
             return is_whitelisted == 1;
+        }
+
+        public decimal GetBalanceOf(UInt160 script_hash, string symbol)
+        {
+            var balances = api.GetAssetBalancesOf(script_hash);
+            return balances.ContainsKey(symbol) ? balances[symbol] : 0;
         }
         #endregion
     }
@@ -154,39 +198,12 @@ namespace PhantasmaTests
             Assert.IsTrue(war_date.Hour == 0);
             Assert.IsTrue(war_date.Minute == 0);
 
-            var end_date = PhantasmaContract.ico_start_time.ToDateTime();
+            var end_date = PhantasmaContract.ico_end_time.ToDateTime();
             Assert.IsTrue(end_date.Day == 29);
             Assert.IsTrue(end_date.Month == 5);
             Assert.IsTrue(end_date.Year == 2018);
             Assert.IsTrue(end_date.Hour == 0);
             Assert.IsTrue(end_date.Minute == 0);
-        }
-
-        [Test]
-        public void TestTokenDeploy()
-        {
-            var env = new TestEnviroment(0);
-
-            env.api.Chain.DettachDebugger();
-            Assert.IsTrue(env.token.TotalSupply == 0);
-
-            var tx = TokenSale.Deploy(env.token, env.team_keys);
-            Assert.IsNotNull(tx);
-
-            var notifications = env.api.Chain.GetNotifications(tx);
-            Assert.IsNotNull(notifications);
-            Assert.IsTrue(notifications.Count == 2);
-
-            var account = env.api.Chain.GetAccount(contract_script_hash);
-            Assert.IsTrue(account.storage.entries.Count > 0);
-
-            var presale_balance = env.token.BalanceOf(PhantasmaContract.Presale_Address);
-            Assert.IsTrue(presale_balance == (PhantasmaContract.presale_supply / PhantasmaContract.soul_decimals));
-
-            var plaform_balance = env.token.BalanceOf(PhantasmaContract.Platform_Address);
-            Assert.IsTrue(plaform_balance == (PhantasmaContract.platform_supply / PhantasmaContract.soul_decimals));
-
-            Assert.IsTrue(env.token.TotalSupply == (PhantasmaContract.initialSupply / PhantasmaContract.soul_decimals));
         }
 
         [Test]
@@ -196,20 +213,21 @@ namespace PhantasmaTests
 
             var neo_amount = 5;
 
+            var original_neo_balance = env.GetBalanceOf(contract_script_hash, "NEO");
+
             var random_buyerKeys = KeyPair.GenerateAddress();
             env.api.SendAsset(env.owner_keys, random_buyerKeys.address, "NEO", neo_amount);
 
             env.api.Chain.Time = PhantasmaContract.ico_start_time + 1;
 
             var tx = TokenSale.MintTokens(env.token, random_buyerKeys, "NEO", neo_amount);
-
-            Assert.IsNotNull(tx);
-
-            var notifications = env.api.Chain.GetNotifications(tx);
-            Assert.IsNull(notifications);
+            Assert.IsNull(tx);
 
             var balance = env.token.BalanceOf(random_buyerKeys);
             Assert.IsTrue(balance == 0);
+
+            var current_neo_balance = env.GetBalanceOf(contract_script_hash, "NEO");
+            Assert.IsTrue(current_neo_balance == original_neo_balance);
         }
 
         [Test]
@@ -228,10 +246,7 @@ namespace PhantasmaTests
 
             var tx = TokenSale.MintTokens(env.token, random_buyerKeys, "NEO", neo_amount);
 
-            Assert.IsNotNull(tx);
-
-            var notifications = env.api.Chain.GetNotifications(tx);
-            //Assert.IsNull(notifications);
+            Assert.IsNull(tx);
 
             var new_balance = env.token.BalanceOf(random_buyerKeys);
             Assert.IsTrue(new_balance == original_balance);
@@ -256,10 +271,7 @@ namespace PhantasmaTests
 
             var tx = TokenSale.MintTokens(env.token, env.whitelisted_buyerKeys[n], "NEO", neo_amount);
 
-            Assert.IsNotNull(tx);
-
-            var notifications = env.api.Chain.GetNotifications(tx);
-            Assert.IsNull(notifications);
+            Assert.IsNull(tx);
 
             var new_balance = env.token.BalanceOf(env.whitelisted_buyerKeys[n]);
             Assert.IsTrue(new_balance == original_balance);
@@ -315,9 +327,11 @@ namespace PhantasmaTests
             var neo_amount = purchases.Sum();
             env.api.SendAsset(env.owner_keys, env.whitelisted_buyerKeys[n].address, "NEO", neo_amount);
 
+            var total_bough = 0;
             for (int i=0; i<purchases.Length; i++)
             {
                 var tx = TokenSale.MintTokens(env.token, env.whitelisted_buyerKeys[n], "NEO", purchases[i]);
+                total_bough += purchases[i];
 
                 Assert.IsNotNull(tx);
 
@@ -326,54 +340,222 @@ namespace PhantasmaTests
                 //Assert.IsTrue(notifications.Count == 1);
 
                 // advance time
-                env.api.Chain.Time += (uint)(1000 * purchases[i] * 20);
+                env.api.Chain.Time += (uint)(5 + n % 20);
+                Assert.IsTrue(env.api.Chain.Time > PhantasmaContract.ico_start_time);
+                Assert.IsTrue(env.api.Chain.Time < PhantasmaContract.ico_war_time);
+
+                var new_balance = env.token.BalanceOf(env.whitelisted_buyerKeys[n]);
+                var expected_balance = original_balance + total_bough * (int)(PhantasmaContract.token_swap_rate / PhantasmaContract.soul_decimals);
+                Assert.IsTrue(new_balance == expected_balance);
             }
-
-            var new_balance = env.token.BalanceOf(env.whitelisted_buyerKeys[n]);
-
-            var expected_balance = original_balance + neo_amount * (int)(PhantasmaContract.token_swap_rate / PhantasmaContract.soul_decimals);
-            Assert.IsTrue(new_balance == expected_balance);
         }
 
         [Test]
-        public void WithdrawNeoAfterSale()
+        public void SimulateFullSaleAllFilled()
         {
-            var env = new TestEnviroment(20);
+            var env = new TestEnviroment(2058);
+
+            // go back to the past
+            env.api.Chain.Time = PhantasmaContract.ico_start_time / 2;
+
+            for (int n = 0; n < env.whitelisted_buyerKeys.Length; n++)
+            {
+                env.api.SendAsset(env.owner_keys, env.whitelisted_buyerKeys[n].address, "NEO", 60);
+            }
+
+            var initial_supply = env.token.TotalSupply;
+
+            var first_cap = (uint)(PhantasmaContract.token_initial_cap / PhantasmaContract.token_swap_rate);
+            var first_round_supply = 5613426; // PhantasmaContract.sale1_supply / PhantasmaContract.soul_decimals;
+            var first_round_neo = (uint)(first_round_supply) / env.swap_rate;
+            var first_round_count = first_round_neo / first_cap;
+
+            var first_round_extra_neo = first_round_neo - first_round_count * first_cap;
+
+            if (first_round_extra_neo > 0)
+            {
+
+                first_round_count++;
+            }
+
+            long total_amount = 0;
+
+            Assert.IsTrue(first_round_count <= env.whitelisted_buyerKeys.Length);
 
             env.api.Chain.Time = PhantasmaContract.ico_start_time + 1;
-
-            var total_amount = 0;
-
-            for (int n=0; n<env.whitelisted_buyerKeys.Length; n++)
+            for (int n = 0; n < first_round_count; n++)
             {
                 var is_whitelisted = env.IsWhitelisted(env.whitelisted_buyerKeys[n].address.AddressToScriptHash());
                 Assert.IsTrue(is_whitelisted);
 
-                var neo_amount = 1 + n % 10;
+                var original_balance = env.token.BalanceOf(env.whitelisted_buyerKeys[n]);
+                Assert.IsTrue(original_balance == 0);
+
+                var neo_amount = (first_round_extra_neo>0 && n == first_round_count-1)? first_round_extra_neo: 10;
                 total_amount += neo_amount;
 
-                env.api.SendAsset(env.owner_keys, env.whitelisted_buyerKeys[n].address, "NEO", neo_amount);
-
+                env.api.Chain.Time++;
                 Assert.IsTrue(env.api.Chain.Time > PhantasmaContract.ico_start_time);
                 Assert.IsTrue(env.api.Chain.Time < PhantasmaContract.ico_war_time);
 
-                var tx = TokenSale.MintTokens(env.token, env.whitelisted_buyerKeys[n], "NEO", neo_amount);
+                var mintTx = TokenSale.MintTokens(env.token, env.whitelisted_buyerKeys[n], "NEO", neo_amount);
+                Assert.IsNotNull(mintTx);
 
-                Assert.IsNotNull(tx);
-
-                var notifications = env.api.Chain.GetNotifications(tx);
+                var notifications = env.api.Chain.GetNotifications(mintTx);
                 //Assert.IsNotNull(notifications);
                 //Assert.IsTrue(notifications.Count == 1);
 
-                var balance = env.token.BalanceOf(env.whitelisted_buyerKeys[n]);
+                var token_balance = env.token.BalanceOf(env.whitelisted_buyerKeys[n]);
 
-                var expected_balance = neo_amount * (int)(PhantasmaContract.token_swap_rate / PhantasmaContract.soul_decimals);
-                Assert.IsTrue(balance == expected_balance);
+                var expected_balance = original_balance + neo_amount * env.swap_rate;
+                Assert.IsTrue(token_balance == expected_balance);
             }
 
-            var balances = env.api.GetAssetBalancesOf(contract_script_hash);
-            Assert.IsTrue(balances.ContainsKey("NEO"));
-            Assert.IsTrue(balances["NEO"] == total_amount);
+            var expected_supply = initial_supply + total_amount * env.swap_rate;
+            Assert.IsTrue(expected_supply == env.token.TotalSupply);
+
+            uint second_round_supply = 702975;
+            var second_round_neo = second_round_supply / env.swap_rate;
+            var second_round_count = second_round_neo / 50;
+            var second_round_extra_neo = second_round_neo - (second_round_count * 50);
+
+            if (second_round_extra_neo > 0)
+            {
+
+                second_round_count++;
+            }
+
+            env.api.Chain.Time = PhantasmaContract.ico_war_time + 1;
+            for (int n = 0; n < second_round_count; n++)
+            {
+                var is_whitelisted = env.IsWhitelisted(env.whitelisted_buyerKeys[n].address.AddressToScriptHash());
+                Assert.IsTrue(is_whitelisted);
+
+                var original_balance = env.token.BalanceOf(env.whitelisted_buyerKeys[n]);
+
+                var neo_amount = (second_round_extra_neo > 0 && n == second_round_count - 1) ? second_round_extra_neo : 50;
+                total_amount += neo_amount;
+
+                env.api.Chain.Time++;
+                Assert.IsTrue(env.api.Chain.Time > PhantasmaContract.ico_war_time);
+                Assert.IsTrue(env.api.Chain.Time < PhantasmaContract.ico_end_time);
+
+                var mintTx = TokenSale.MintTokens(env.token, env.whitelisted_buyerKeys[n], "NEO", neo_amount);
+                Assert.IsNotNull(mintTx);
+
+                var notifications = env.api.Chain.GetNotifications(mintTx);
+                //Assert.IsNotNull(notifications);
+                //Assert.IsTrue(notifications.Count == 1);
+
+                var token_balance = env.token.BalanceOf(env.whitelisted_buyerKeys[n]);
+
+                var expected_balance = original_balance + neo_amount * env.swap_rate;
+                Assert.IsTrue(token_balance == expected_balance);
+            }
+
+            // test if cap cannot be exceed
+            for (int n = 0; n < 20; n++)
+            {
+                var is_whitelisted = env.IsWhitelisted(env.whitelisted_buyerKeys[n].address.AddressToScriptHash());
+                Assert.IsTrue(is_whitelisted);
+
+                var original_balance = env.token.BalanceOf(env.whitelisted_buyerKeys[n]);
+
+                var neo_amount = n + 1;
+
+                env.api.Chain.Time++;
+                Assert.IsTrue(env.api.Chain.Time > PhantasmaContract.ico_war_time);
+                Assert.IsTrue(env.api.Chain.Time < PhantasmaContract.ico_end_time);
+
+                var mintTx = TokenSale.MintTokens(env.token, env.whitelisted_buyerKeys[n], "NEO", neo_amount);
+                Assert.IsNull(mintTx);
+              
+                var token_balance = env.token.BalanceOf(env.whitelisted_buyerKeys[n]);
+
+                Assert.IsTrue(token_balance == original_balance);
+            }
+
+            expected_supply = initial_supply + total_amount * env.swap_rate;
+            Assert.IsTrue(expected_supply == 91136374);
+            Assert.IsTrue(expected_supply == env.token.TotalSupply);
+
+            var neo_balance = env.GetBalanceOf(contract_script_hash, "NEO");
+            Assert.IsTrue(neo_balance == total_amount);
+
+            var tx = env.api.WithdrawAsset(env.team_keys, contract_script_hash.ToAddress(), "NEO", neo_balance, contract_script_bytes);
+            Assert.IsNotNull(tx);
+
+            neo_balance = env.GetBalanceOf(contract_script_hash, "NEO");
+            Assert.IsTrue(neo_balance == 0);
+
+            neo_balance = env.GetBalanceOf(new UInt160(env.team_keys.address.AddressToScriptHash()), "NEO");
+            Assert.IsTrue(neo_balance == total_amount);
+        }
+
+        [Test]
+        public void UnlockTeamVestedTokens()
+        {
+            var env = new TestEnviroment(0);
+
+            var unlock_amount = (uint)(PhantasmaContract.team_monthly_supply / PhantasmaContract.soul_decimals);
+
+            var original_balance = env.token.BalanceOf(env.team_keys);
+
+            env.api.Chain.Time = 1550793500;
+            env.api.CallContract(env.team_keys, ContractTests.contract_script_hash, "unlockTeam", new object[] { });
+
+            var current_balance = env.token.BalanceOf(PhantasmaContract.Team_Address);
+            Assert.IsTrue(current_balance == original_balance);
+
+            env.api.Chain.AttachDebugger(env.debugger);
+
+            env.api.Chain.Time = 1550793601;
+            env.api.CallContract(env.team_keys, ContractTests.contract_script_hash, "unlockTeam", new object[] { });
+
+            //env.api.Chain.DettachDebugger();
+
+            current_balance = env.token.BalanceOf(PhantasmaContract.Team_Address);
+            Assert.IsTrue(current_balance == original_balance + unlock_amount);
+
+            original_balance = current_balance;
+            env.api.Chain.Time = 1550793900;
+            env.api.CallContract(env.team_keys, ContractTests.contract_script_hash, "unlockTeam", new object[] { });
+
+            current_balance = env.token.BalanceOf(PhantasmaContract.Team_Address);
+            Assert.IsTrue(current_balance == original_balance);
+        }
+
+        [Test]
+        public void UnlockAdvisorVestedTokens()
+        {
+            var env = new TestEnviroment(0);
+
+            var unlock_amount = (uint)(PhantasmaContract.advisor_monthly_supply/ PhantasmaContract.soul_decimals);
+
+            var original_balance = env.token.BalanceOf(env.team_keys);
+
+            env.api.Chain.Time = 1534895000;
+            env.api.CallContract(env.team_keys, ContractTests.contract_script_hash, "unlockAdvisor", new object[] { });
+
+            var current_balance = env.token.BalanceOf(PhantasmaContract.Advisor_Address);
+            Assert.IsTrue(current_balance == original_balance);
+
+            env.api.Chain.AttachDebugger(env.debugger);
+
+            env.api.Chain.Time = 1534896001;
+            env.api.CallContract(env.team_keys, ContractTests.contract_script_hash, "unlockAdvisor", new object[] { });
+
+            //env.api.Chain.DettachDebugger();
+
+            current_balance = env.token.BalanceOf(PhantasmaContract.Advisor_Address);
+            Assert.IsTrue(current_balance == original_balance + unlock_amount);
+
+            original_balance = current_balance;
+            env.api.Chain.Time = 1534896002;
+            env.api.CallContract(env.team_keys, ContractTests.contract_script_hash, "unlockAdvisor", new object[] { });
+
+            current_balance = env.token.BalanceOf(PhantasmaContract.Advisor_Address);
+            Assert.IsTrue(current_balance == original_balance);
         }
 
 
