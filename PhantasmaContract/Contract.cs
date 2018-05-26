@@ -1063,7 +1063,10 @@ namespace Neo.SmartContract
 
         public static bool MintTokensRemaining()
         {
-            if (!Runtime.CheckWitness(Airdrop_Address))
+            if (!Runtime.CheckWitness(Team_Address))
+                return false;
+
+            if (Runtime.Time < ico_end_time)
                 return false;
 
             BigInteger remaining = AvailableTokens();
