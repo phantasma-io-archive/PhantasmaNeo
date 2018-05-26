@@ -1070,6 +1070,9 @@ namespace Neo.SmartContract
                 return false;
 
             BigInteger remaining = AvailableTokens();
+            if (remaining <= 0)
+                return false;
+
             CreditTokensToAddress(Airdrop_Address, remaining);
             OnMint(Airdrop_Address, remaining);
 
