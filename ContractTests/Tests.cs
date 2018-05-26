@@ -499,30 +499,59 @@ namespace PhantasmaTests
 
             var unlock_amount = (uint)(PhantasmaContract.team_monthly_supply / PhantasmaContract.soul_decimals);
 
-            var original_balance = env.token.BalanceOf(env.team_keys);
+            for (int i=0; i < 10; i++)
+            {
+                var original_balance = env.token.BalanceOf(PhantasmaContract.Team_Address);
 
-            env.api.Chain.Time = 1550793500;
-            env.api.CallContract(env.team_keys, ContractTests.contract_script_hash, "unlockTeam", new object[] { });
+                uint unlockTime = 0;
+                if (i == 0) { unlockTime = 1550793600; }
+                else
+                if (i == 1) { unlockTime = 1558483200; }
+                else
+                if (i == 2) { unlockTime = 1566432000; }
+                else
+                if (i == 3) { unlockTime = 1574380800; }
+                else
+                if (i == 4) { unlockTime = 1582329600; }
+                else
+                if (i == 5) { unlockTime = 1590105600; }
+                else
+                if (i == 6) { unlockTime = 1598054400; }
+                else
+                if (i == 7) { unlockTime = 1606003200; }
+                else
+                if (i == 8) { unlockTime = 1613952000; }
+                else
+                if (i == 9) { unlockTime = 1621641600; }
 
-            var current_balance = env.token.BalanceOf(PhantasmaContract.Team_Address);
-            Assert.IsTrue(current_balance == original_balance);
+                env.api.Chain.Time = unlockTime - 5;
 
-            env.api.Chain.AttachDebugger(env.debugger);
+                env.api.CallContract(env.team_keys, ContractTests.contract_script_hash, "unlockTeam", new object[] { });
 
-            env.api.Chain.Time = 1550793601;
-            env.api.CallContract(env.team_keys, ContractTests.contract_script_hash, "unlockTeam", new object[] { });
+                var current_balance = env.token.BalanceOf(PhantasmaContract.Team_Address);
+                Assert.IsTrue(current_balance == original_balance);
 
-            //env.api.Chain.DettachDebugger();
+                env.api.Chain.AttachDebugger(env.debugger);
 
-            current_balance = env.token.BalanceOf(PhantasmaContract.Team_Address);
-            Assert.IsTrue(current_balance == original_balance + unlock_amount);
+                env.api.Chain.Time = unlockTime;
+                env.api.CallContract(env.team_keys, ContractTests.contract_script_hash, "unlockTeam", new object[] { });
 
-            original_balance = current_balance;
-            env.api.Chain.Time = 1550793900;
-            env.api.CallContract(env.team_keys, ContractTests.contract_script_hash, "unlockTeam", new object[] { });
+                //env.api.Chain.DettachDebugger();
 
-            current_balance = env.token.BalanceOf(PhantasmaContract.Team_Address);
-            Assert.IsTrue(current_balance == original_balance);
+                current_balance = env.token.BalanceOf(PhantasmaContract.Team_Address);
+                Assert.IsTrue(current_balance == original_balance + unlock_amount);
+
+                original_balance = current_balance;
+                env.api.Chain.Time = unlockTime + 5;
+                env.api.CallContract(env.team_keys, ContractTests.contract_script_hash, "unlockTeam", new object[] { });
+
+                current_balance = env.token.BalanceOf(PhantasmaContract.Team_Address);
+                Assert.IsTrue(current_balance == original_balance);
+            }
+
+            var final_balance = env.token.BalanceOf(PhantasmaContract.Team_Address);
+            var expected_balance = 10 * unlock_amount;
+            Assert.IsTrue(final_balance == expected_balance);
         }
 
         [Test]
@@ -532,9 +561,10 @@ namespace PhantasmaTests
 
             var unlock_amount = (uint)(PhantasmaContract.advisor_monthly_supply/ PhantasmaContract.soul_decimals);
 
-            var original_balance = env.token.BalanceOf(env.team_keys);
+            var original_balance = env.token.BalanceOf(PhantasmaContract.Advisor_Address);
 
             env.api.Chain.Time = 1534895000;
+
             env.api.CallContract(env.team_keys, ContractTests.contract_script_hash, "unlockAdvisor", new object[] { });
 
             var current_balance = env.token.BalanceOf(PhantasmaContract.Advisor_Address);
