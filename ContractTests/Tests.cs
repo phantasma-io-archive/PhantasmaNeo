@@ -21,7 +21,7 @@ namespace PhantasmaTests
 {
     public class TestEnviroment
     {
-        public readonly NeoEmulator api;
+        public readonly Emulator api;
         public readonly KeyPair owner_keys;
         public readonly KeyPair team_keys;        
         public readonly KeyPair[] whitelisted_buyerKeys;
@@ -37,7 +37,7 @@ namespace PhantasmaTests
             // this is the key for the NEO "issuer" in the virtual chain used for testing
             owner_keys = KeyPair.GenerateAddress();
 
-            this.api = new NeoEmulator(owner_keys);
+            this.api = new Emulator(owner_keys);
 
             this.api.SetLogger(x => {
                 if (api.Chain.HasDebugger)
