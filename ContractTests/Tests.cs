@@ -11,7 +11,6 @@ using System.Diagnostics;
 using System.Numerics;
 using Neo.Lux.Debugger;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 
 /*
  * DOCS HERE => http://docs.neo.org/en-us/sc/test.html

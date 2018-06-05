@@ -36,9 +36,6 @@
     <Reference Include="LunarParser, Version=1.0.33.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\LunarParser.1.0.33\lib\net461\LunarParser.dll</HintPath>
     </Reference>
-    <Reference Include="Neo.Lux, Version=0.7.3.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\NeoLux.0.7.3\lib\net461\Neo.Lux.dll</HintPath>
-    </Reference>
     <Reference Include="nunit.framework, Version=3.10.1.0, Culture=neutral, PublicKeyToken=2638cd05610744eb, processorArchitecture=MSIL">
       <HintPath>..\packages\NUnit.3.10.1\lib\net45\nunit.framework.dll</HintPath>
     </Reference>
@@ -64,6 +61,12 @@
   </ItemGroup>
   <ItemGroup>
     <Service Include="{82A7F48D-3B50-4B1E-B82E-3ADA8210C358}" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Neo.Lux\Neo.Lux\Neo.Lux.csproj">
+      <Project>{6b77cfdf-f909-4f87-97b3-9449e084a90f}</Project>
+      <Name>Neo.Lux</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
